@@ -444,22 +444,7 @@ function calculateBestThing(){
 
     for (var i in Game.UpgradesInStore) {
         var me = Game.UpgradesInStore[i];
-        var excluded_upgrades = [
-            'One mind',
-            'Elder Covenant',
-            'Elder Pledge',
-            'Golden switch [off]',
-            'Bunny biscuit',
-            'Festive biscuit',
-            'Fool\'s biscuit',
-            'Ghostly biscuit',
-            'Lovesick biscuit',
-            'Sugar frenzy',
-            'Milk selector',
-            'Background selector',
-            'Golden cookie sound selector',
-        ];
-        if (!excluded_upgrades.includes(me.name)) {
+        if (me.pool != 'toggle' && me.name != 'One mind') {
             args[me.name] = ['', 0, me.name, 0, 0];
             things[me.name] = {type: 'upgrade', name: me.name, cps: calculateCps(...args[me.name])};
             things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
