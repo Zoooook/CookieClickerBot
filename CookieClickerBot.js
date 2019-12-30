@@ -5,7 +5,6 @@
 
 // cheap upgrades
 // multi buy buildings if cheap
-// exclude useless upgrades for efficiency
 // take into account all achievements, careful with already gotten from previous ascension
 // buildings for achievements at 50 etc
 // double buildings + 5
@@ -73,12 +72,12 @@ function calculateClickCps(cookiesPs, testBuy, testUpgrade) {
     if (willHave(    'Armythril mouse', testUpgrade)) add+=cookiesPs*0.01;
     if (willHave('Technobsidian mouse', testUpgrade)) add+=cookiesPs*0.01;
     if (willHave(   'Plasmarble mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave(       'Fortune #104', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave('Fortune #104',        testUpgrade)) add+=cookiesPs*0.01;
 
     var mult=1;
     if (willHave('Santa\'s helpers', testUpgrade)) mult*=1.1;
-    if (willHave(      'Cookie egg', testUpgrade)) mult*=1.1;
-    if (willHave(     'Halo gloves', testUpgrade)) mult*=1.1;
+    if (willHave('Cookie egg',       testUpgrade)) mult*=1.1;
+    if (willHave('Halo gloves',      testUpgrade)) mult*=1.1;
     mult*=Game.eff('click');
 
     if (Game.hasGod){
@@ -140,17 +139,17 @@ function calculateGrandmaCps(testBuy, testUpgrade){
         if (willHave(Game.GrandmaSynergies[i], testUpgrade)) mult*=2;
     }
     if (willHave('Bingo center/Research facility', testUpgrade)) mult*=4;
-    if (willHave(           'Ritual rolling pins', testUpgrade)) mult*=2;
-    if (willHave(                  'Naughty list', testUpgrade)) mult*=2;
-    if (willHave(            'Elderwort biscuits', testUpgrade)) mult*=1.02;
+    if (willHave('Ritual rolling pins',            testUpgrade)) mult*=2;
+    if (willHave('Naughty list',                   testUpgrade)) mult*=2;
+    if (willHave('Elderwort biscuits',             testUpgrade)) mult*=1.02;
 
     mult*=Game.eff('grandmaCps');
     mult*=calculateTieredCpsMult(Game.Objects['Grandma'], testBuy, testUpgrade);
 
     var add=0;
-    if (willHave(           'One mind', testUpgrade)) add+=amount(Game.Objects['Grandma'], testBuy)*0.02;
+    if (willHave('One mind',            testUpgrade)) add+=amount(Game.Objects['Grandma'], testBuy)*0.02;
     if (willHave('Communal brainsweep', testUpgrade)) add+=amount(Game.Objects['Grandma'], testBuy)*0.02;
-    if (willHave(         'Elder Pact', testUpgrade)) add+=amount(Game.Objects['Portal'], testBuy)*0.05;
+    if (willHave('Elder Pact',          testUpgrade)) add+=amount(Game.Objects['Portal'], testBuy)*0.05;
 
     var num=0;
     for (var i in Game.Objects) {
@@ -374,16 +373,16 @@ function calculateBuildingPrice(buildingName, testBuy, testBuyCount, testUpgrade
     var building = Game.Objects[buildingName];
     var price = building.basePrice*Math.pow(Game.priceIncrease,Math.max(0,building.amount-building.free));
 
-    if (willHave(   'Season savings', testUpgrade)) price*=0.99;
+    if (willHave('Season savings',    testUpgrade)) price*=0.99;
     if (willHave('Santa\'s dominion', testUpgrade)) price*=0.99;
-    if (willHave(      'Faberge egg', testUpgrade)) price*=0.99;
-    if (willHave(  'Divine discount', testUpgrade)) price*=0.99;
-    if (willHave(     'Fortune #100', testUpgrade)) price*=0.99;
+    if (willHave('Faberge egg',       testUpgrade)) price*=0.99;
+    if (willHave('Divine discount',   testUpgrade)) price*=0.99;
+    if (willHave('Fortune #100',      testUpgrade)) price*=0.99;
 
     price*=1-Game.auraMult('Fierce Hoarder')*0.02;
     if (Game.hasBuff('Everything must go')) price*=0.95;
-    if (Game.hasBuff(     'Crafty pixies')) price*=0.98;
-    if (Game.hasBuff(     'Nasty goblins')) price*=1.02;
+    if (Game.hasBuff('Crafty pixies'))      price*=0.98;
+    if (Game.hasBuff('Nasty goblins'))      price*=1.02;
     if (building.fortune && willHave(building.fortune.name, testUpgrade)) price*=0.93;
     price*=Game.eff('buildingCost');
 
@@ -404,12 +403,12 @@ function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, 
     if (price==0) return 0;
 
     if (upgrade.pool!='prestige'){
-        if (willHave(        'Toy workshop', testUpgrade)) price*=0.95;
+        if (willHave('Toy workshop', testUpgrade)) price*=0.95;
         if (willHave('Five-finger discount', testUpgrade)) price*=Math.pow(0.99,amount(Game.Objects['Cursor'], testBuy)/100);
-        if (willHave(   'Santa\'s dominion', testUpgrade)) price*=0.98;
-        if (willHave(         'Faberge egg', testUpgrade)) price*=0.99;
-        if (willHave(        'Divine sales', testUpgrade)) price*=0.99;
-        if (willHave(        'Fortune #100', testUpgrade)) price*=0.99;
+        if (willHave('Santa\'s dominion',    testUpgrade)) price*=0.98;
+        if (willHave('Faberge egg',          testUpgrade)) price*=0.99;
+        if (willHave('Divine sales',         testUpgrade)) price*=0.99;
+        if (willHave('Fortune #100',         testUpgrade)) price*=0.99;
         if (Game.hasBuff('Haggler\'s luck'))               price*=0.98;
         if (Game.hasBuff('Haggler\'s misery'))             price*=1.02;
         price*=1-Game.auraMult('Master of the Armory')*0.02;
