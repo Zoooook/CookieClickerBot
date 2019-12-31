@@ -366,7 +366,9 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
         if (typeof Game.buffs[i].multCpS != 'undefined') mult*=Game.buffs[i].multCpS;
     }
 
-    return cookiesPs*mult + calculateClickCps(cookiesPs, testBuy, testUpgrade);
+    cookiesPs*=mult
+
+    return cookiesPs + calculateClickCps(cookiesPs, testBuy, testUpgrade);
 }
 
 function calculateBuildingPrice(buildingName, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta){
@@ -550,6 +552,10 @@ function calculateBestThing(){
             'Reindeer baking grounds',
             'Ho ho ho-flavored frosting',
             'Santa\'s bottomless bag',
+            'Golden goose egg',
+            'Wrinklerspawn',
+            'Omelette',
+            '"egg"',
             'A crumbly egg'
         ].includes(thing.name) && (!best.price || thing.price <= best.price)) {
             best = thing;
