@@ -1,4 +1,3 @@
-// don't pop shiny wrinklers after achievement
 // guard against all percents = 0
 // take into account all achievements, careful with already gotten from previous ascension
 // buildings for achievements at 50 etc
@@ -427,7 +426,7 @@ function calculateBestThing(){
     if (['easter', 'halloween'].includes(Game.season) || !Game.HasAchiev('Moistburster')) {
         for (var i in Game.wrinklers) {
             var me = Game.wrinklers[i];
-            if (me.phase > 0) {
+            if (me.phase > 0 && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
                 best = {type: 'wrinkler', name: i.toString(), percent: 0, price: 0, value: 0};
                 clog('wrinkler', best);
                 return;
@@ -435,7 +434,7 @@ function calculateBestThing(){
         }
     } else {
         var popWrinkler = 1;
-        var bestWrinkler = 0;
+        var bestWrinkler = -1;
         var bestWrinklerSucked = 0;
 
         for (var i=0; i<Game.getWrinklersMax(); ++i) {
@@ -444,13 +443,13 @@ function calculateBestThing(){
                 popWrinkler = 0;
                 break;
             }
-            if (me.sucked > bestWrinklerSucked) {
+            if (me.sucked > bestWrinklerSucked && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
                 bestWrinkler = i;
                 bestWrinklerSucked = me.sucked;
             }
         }
 
-        if (popWrinkler) {
+        if (popWrinkler && bestWrinkler > -1) {
             best = {type: 'wrinkler', name: bestWrinkler.toString(), percent: 0, price: 0, value: 0};
             clog('wrinkler', best);
             return;
