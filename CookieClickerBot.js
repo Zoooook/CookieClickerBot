@@ -618,6 +618,7 @@ function playTheGame(){
 
 function initialize(){
     Game.Win('Cheated cookies taste awful');
+    Game.Win('Third-party');
     Game.ClickTinyCookie();
     Game.bakeryNameSet('orteil');
     Game.bakeryNameSet('Zookbot');
