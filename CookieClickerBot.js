@@ -1,4 +1,4 @@
-// pop wrinklers for drops
+// late golden cookie achievement
 // take into account all achievements, careful with already gotten from previous ascension
 // buildings for achievements at 50 etc
 // double buildings + 5
@@ -423,19 +423,43 @@ function clog(message, thing) {
 }
 
 function calculateBestThing(){
+    if (['easter', 'halloween'].includes(Game.season)) {
+        for (var i in Game.wrinklers) {
+            var me = Game.wrinklers[i];
+            if (me.phase > 0) {
+                best = {type: 'wrinkler', name: i, percent: 0, price: 0, value: 0};
+                clog('wrinkler', best);
+                return;
+            }
+        }
+    } else {
+        var popWrinkler = 1;
+        var bestWrinkler = 0;
+        var bestWrinklerSucked = 0;
+
+        for (var i=0; i<Game.getWrinklersMax(); ++i) {
+            var me = Game.wrinklers[i];
+            if (me.phase == 0 || me.hp <= .5) {
+                popWrinkler = 0;
+                break;
+            }
+            if (me.sucked > bestWrinklerSucked) {
+                bestWrinkler = i;
+                bestWrinklerSucked = me.sucked;
+            }
+        }
+
+        if (popWrinkler) {
+            best = {type: 'wrinkler', name: bestWrinkler, percent: 0, price: 0, value: 0};
+            clog('wrinkler', best);
+            return;
+        }
+    }
+
     var things = {};
     var args = {};
     var defaultArgs = ['', 0, '', 0, 0];
     var currentCps = calculateCps(...defaultArgs);
-
-    for (var i in Game.Objects) {
-        var me = Game.Objects[i];
-        args[me.name] = [me.name, 1, '', 0, 0];
-        things[me.name] = {type: 'building', name: me.name, cps: calculateCps(...args[me.name])};
-        things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
-        things[me.name].price = calculateBuildingPrice(me.name, ...defaultArgs);
-        things[me.name].value = things[me.name].percent / things[me.name].price;
-    }
 
     var hasLovelyCookies = Game.Has('Pure heart biscuits') && Game.Has('Ardent heart biscuits') && Game.Has('Sour heart biscuits') && Game.Has('Weeping heart biscuits') && Game.Has('Golden heart biscuits') && Game.Has('Eternal heart biscuits');
     var hasSpookyCookies = Game.Has('Skull cookies') && Game.Has('Ghost cookies') && Game.Has('Bat cookies') && Game.Has('Slime cookies') && Game.Has('Pumpkin cookies') && Game.Has('Eyeball cookies') && Game.Has('Spider cookies');
@@ -453,10 +477,9 @@ function calculateBestThing(){
             me.name ==  'Ghostly biscuit' && Game.season != 'halloween' && !hasSpookyCookies && eggs == 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
             me.name ==  'Festive biscuit' && Game.season != 'christmas' &&  hasSpookyCookies && eggs == 20 &&  hasLovelyCookies
         ) {
-            things[me.name] = {type: 'upgrade', name: me.name, percent: 0, value: 0};
-            things[me.name].price = calculateUpgradePrice(me.name, ...defaultArgs);
-            best = things[me.name];
-            clog('best', best);
+            best = {type: 'upgrade', name: me.name, percent: 0, value: 0};
+            best.price = calculateUpgradePrice(me.name, ...defaultArgs);
+            clog('season', best);
             return;
         }
 
@@ -467,6 +490,15 @@ function calculateBestThing(){
             things[me.name].price = calculateUpgradePrice(me.name, ...defaultArgs);
             things[me.name].value = things[me.name].percent / things[me.name].price;
         }
+    }
+
+    for (var i in Game.Objects) {
+        var me = Game.Objects[i];
+        args[me.name] = [me.name, 1, '', 0, 0];
+        things[me.name] = {type: 'building', name: me.name, cps: calculateCps(...args[me.name])};
+        things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
+        things[me.name].price = calculateBuildingPrice(me.name, ...defaultArgs);
+        things[me.name].value = things[me.name].percent / things[me.name].price;
     }
 
     console.log(things);
@@ -616,10 +648,12 @@ function playTheGame(){
             if (highestBuilding.id) Game.ObjectsById[highestBuilding.id].sacrifice(1);
             if (best.name == 'Dragonflight') Game.dragonAura=10;
             else if (best.name == 'Radiant Appetite') Game.dragonAura2=15;
-        }
+        } else if (best.type == 'wrinkler') Game.wrinklers[best.name].hp = -10;
 
         best = {};
-    } else if(Game.shimmers.length) Game.shimmers[0].pop();
+    } else if(Game.shimmers.length) {
+        Game.shimmers[0].pop();
+    }
     else if (!best.name) {
         if (restoreHeight && Game.HasAchiev('Cookie-dunker')) {
             Game.LeftBackground.canvas.height = restoreHeight;
