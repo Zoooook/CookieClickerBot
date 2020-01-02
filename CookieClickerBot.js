@@ -482,7 +482,7 @@ function calculateBestThing(){
         }
 
         if (
-            me.pool != 'toggle' && !me.isVaulted() &&
+            me.pool != 'toggle' && !me.isVaulted() && me.name != 'Chocolate egg' &&
             (me.name != 'Communal brainsweep' || !Game.HasAchiev('Elder slumber') || !Game.HasAchiev('Elder calm'))
         ) {
             args[me.name] = ['', 0, me.name, 0, 0];
