@@ -1,6 +1,3 @@
-// only upgrade krumblor if available
-// use aura cost function
-// show dragon menu
 // get krumblor second aura
 
 // cheap upgrades
@@ -492,7 +489,7 @@ function calculateBestThing(){
         }
     }
 
-    if (!Game.santaDrops.includes(best.name) && Game.santaLevel<14 && Game.Has('A festive hat')) {
+    if (Game.Has('A festive hat') && Game.santaLevel<14 && !Game.santaDrops.includes(best.name)) {
         var santaPrice = Math.pow(Game.santaLevel+1,Game.santaLevel+1);
 
         var upgradeSanta = 1;
@@ -500,7 +497,7 @@ function calculateBestThing(){
             var thing = things[i];
             if (Game.santaDrops.includes(thing.name)) {
                 upgradeSanta = 0;
-                if (!best.price || thing.price + santaPrice < best.price) {
+                if (thing.price + santaPrice < best.price) {
                     best = thing;
                     clog('santa', best);
                 }
@@ -515,30 +512,32 @@ function calculateBestThing(){
             things.santa.price = santaPrice;
             things.santa.value = things.santa.percent / things.santa.price;
 
-            if (things.santa.value > best.value || !best.price || things.santa.price <= best.price) {
+            if (things.santa.value > best.value || things.santa.price <= best.price) {
                 best = things.santa;
                 clog('santa', best);
             }
         }
     }
 
-    if (Game.dragonLevel < 14) {
-        things.dragon = {type: 'dragon', name: 'dragon', percent: 0, price: 0, value: 0};
+    if (Game.Has('A crumbly egg')) {
+        if (Game.dragonLevel < 14) {
+            things.dragon = {type: 'dragon', name: 'dragon', percent: 0, price: 0, value: 0};
 
-        if (Game.dragonLevel < 5) {
-            things.dragon.price = 1000000*Math.pow(2, Game.dragonLevel)
-            if (!best.price || things.dragon.price < best.price) {
+            if (Game.dragonLevel < 5) {
+                things.dragon.price = 1000000*Math.pow(2, Game.dragonLevel)
+                if (things.dragon.price < best.price) {
+                    best = things.dragon;
+                    clog('dragon', best);
+                }
+            } else if (Game.dragonLevels[Game.dragonLevel].cost()){
                 best = things.dragon;
                 clog('dragon', best);
             }
-        } else if (Game.ObjectsById[Game.dragonLevel-5].amount >= 100){
-            best = things.dragon;
-            clog('dragon', best);
+        } else if (!Game.hasAura('Dragonflight')) {
+            things.aura = {type: 'aura', name: 'Dragonflight', percent: 0, price: 0, value: 0};
+            best = things.aura;
+            clog('aura', best);
         }
-    } else if (!Game.hasAura('Dragonflight')) {
-        things.aura = {type: 'aura', name: 'Dragonflight', percent: 0, price: 0, value: 0};
-        best = things.aura;
-        clog('aura', best);
     }
 
     for (var i in things) {
@@ -567,14 +566,22 @@ function calculateBestThing(){
 }
 
 function playTheGame(){
-    if (best.name && Game.cookies > best.price) {
+    if (best.name && buyThings && Game.cookies > best.price) {
         if (best.type == 'building'){
             Game.Objects[best.name].buy(1);
             if (!Game.HasAchiev('Just wrong')) Game.Objects['Grandma'].sell(1);
         } else if (best.type == 'upgrade') Game.Upgrades[best.name].buy();
-        else if (best.type == 'santa') Game.UpgradeSanta();
-        else if (best.type == 'dragon') Game.UpgradeDragon();
-        else if (best.type == 'aura') {
+        else if (best.type == 'santa') {
+            Game.specialTab='santa';
+            Game.ToggleSpecialMenu(1);
+            Game.UpgradeSanta();
+        } else if (best.type == 'dragon') {
+            Game.specialTab='dragon';
+            Game.ToggleSpecialMenu(1);
+            Game.UpgradeDragon();
+        } else if (best.type == 'aura') {
+            Game.specialTab='dragon';
+            Game.ToggleSpecialMenu(1);
             var highestBuilding={};
             for (var i in Game.Objects) {
                 if (Game.Objects[i].amount>0) highestBuilding=Game.Objects[i];
@@ -636,6 +643,7 @@ function initialize(){
 
 var botInterval;
 var best;
+var buyThings = 1;
 var restoreHeight;
 var clickCountFlag;
 var clickCountStart;
@@ -643,6 +651,14 @@ var clickCountStarted;
 
 var clicksPerSecond = 150;
 var clickCount = 0;
+
+function startBuying(){
+    buyThings = 1;
+}
+
+function stopBuying(){
+    buyThings = 0;
+}
 
 function start(){
     best = {};
