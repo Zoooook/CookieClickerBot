@@ -1,4 +1,4 @@
-// late golden cookie achievement
+// guard against all percents = 0
 // take into account all achievements, careful with already gotten from previous ascension
 // buildings for achievements at 50 etc
 // double buildings + 5
@@ -651,9 +651,7 @@ function playTheGame(){
         } else if (best.type == 'wrinkler') Game.wrinklers[best.name].hp = -10;
 
         best = {};
-    } else if(Game.shimmers.length) {
-        Game.shimmers[0].pop();
-    }
+    } else if(Game.shimmers.length && (Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) Game.shimmers[0].pop();
     else if (!best.name) {
         if (restoreHeight && Game.HasAchiev('Cookie-dunker')) {
             Game.LeftBackground.canvas.height = restoreHeight;
