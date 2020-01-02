@@ -1,3 +1,4 @@
+// slow wrinkler popping based on buying upgrades
 // buildings for achievements at 50 etc
 // take into account all achievements
 // double buildings + 5
@@ -470,7 +471,9 @@ function calculateBestThing(){
     for (var i in Game.UpgradesInStore) {
         var me = Game.UpgradesInStore[i];
 
-        if (me.name == 'Chocolate egg' && !me.isVaulted()) me.vault();
+        if ((
+            me.name == 'Chocolate egg' || (me.name == 'Communal brainsweep' && Game.HasAchiev('Elder slumber') && Game.HasAchiev('Elder calm'))
+        ) && !me.isVaulted()) me.vault();
 
         if (
             me.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                           && Game.santaLevel  < 14 && Game.Has(  'Titanium mouse') ||
@@ -485,10 +488,7 @@ function calculateBestThing(){
             return;
         }
 
-        if (
-            me.pool != 'toggle' && !me.isVaulted() &&
-            (me.name != 'Communal brainsweep' || !Game.HasAchiev('Elder slumber') || !Game.HasAchiev('Elder calm'))
-        ) {
+        if (me.pool != 'toggle' && !me.isVaulted()) {
             args[me.name] = ['', 0, me.name, 0, 0];
             things[me.name] = {type: 'upgrade', name: me.name, cps: calculateCps(...args[me.name])};
             things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
@@ -498,7 +498,7 @@ function calculateBestThing(){
 
         if (
             me.name == 'Elder Pledge'   && !Game.HasAchiev('Elder slumber') ||
-            me.name == 'Elder Covenant' && !Game.HasAchiev('Elder calm') ||
+            me.name == 'Elder Covenant' && Game.Upgrades['Elder Pledge'].unlocked==0 ||
             me.name == 'Revoke Elder Covenant'
         ) {
             things[me.name] = {type: 'upgrade', name: me.name, percent: 0, value: 0, ignore: 1};
