@@ -1,4 +1,3 @@
-// guard against all percents = 0
 // take into account all achievements, careful with already gotten from previous ascension
 // buildings for achievements at 50 etc
 // double buildings + 5
@@ -619,6 +618,11 @@ function calculateBestThing(){
             best = thing;
             clog('override', best);
         }
+    }
+
+    if (!best.name) {
+        best = {type: 'nothing', name: 'nothing', percent: 0, price: (Game.cookiesEarned+Game.cookiesReset)*1000000000, value: 0};
+        clog('nothing', best);
     }
 }
 
