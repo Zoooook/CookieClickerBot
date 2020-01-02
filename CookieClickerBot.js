@@ -576,7 +576,9 @@ function calculateBestThing(){
 function playTheGame(){
     if (best.name && buyThings && Game.cookies > best.price) {
         if (best.type == 'building'){
-            Game.Objects[best.name].buy(1);
+            if (best.price < Game.cookies/1000000) Game.Objects[best.name].buy(50);
+            if (best.price < Game.cookies/1000) Game.Objects[best.name].buy(10);
+            else Game.Objects[best.name].buy(1);
             if (!Game.HasAchiev('Just wrong')) Game.Objects['Grandma'].sell(1);
         } else if (best.type == 'upgrade') Game.Upgrades[best.name].buy();
         else if (best.type == 'santa') {
