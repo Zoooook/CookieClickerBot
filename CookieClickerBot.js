@@ -587,17 +587,7 @@ function playTheGame(){
         best = {};
     } else if(Game.shimmers.length) Game.shimmers[0].pop();
     else if (!best.name) {
-        if (restoreHeight) {
-            console.log(Game.milkProgress, Game.HasAchiev('Cookie-dunker'));
-            if (restoreHeight < 0 && Game.milkProgress>0.1 && !Game.HasAchiev('Cookie-dunker')) {
-                restoreHeight = Game.LeftBackground.canvas.height;
-                Game.LeftBackground.canvas.height = 0;
-            } else if (restoreHeight > 0 && Game.HasAchiev('Cookie-dunker')) {
-                Game.LeftBackground.canvas.height = restoreHeight;
-                restoreHeight = 0;
-            }
-        }
-
+        if(restoreHeight && Game.HasAchiev('Cookie-dunker')) Game.LeftBackground.canvas.height = restoreHeight;
         calculateBestThing();
     }
 
@@ -626,10 +616,17 @@ function playTheGame(){
     Game.ClickCookie();
 }
 
-Game.Win('Cheated cookies taste awful');
-Game.bakeryNameSet('orteil');
-Game.bakeryNameSet('Zookbot');
-Game.Win('What\'s in a name');
+function initialize(){
+    Game.Win('Cheated cookies taste awful');
+    Game.ClickTinyCookie();
+    Game.bakeryNameSet('orteil');
+    Game.bakeryNameSet('Zookbot');
+    Game.Win('What\'s in a name');
+    Game.Achievements['Here you go'].click();
+    while (!Game.HasAchiev('Tabloid addiction')) Game.tickerL.click();
+    restoreHeight = Game.LeftBackground.canvas.height;
+    Game.LeftBackground.canvas.height = 0;
+}
 
 var botInterval;
 var best;
@@ -643,8 +640,6 @@ var clickCount = 0;
 
 function start(){
     best = {};
-    restoreHeight = -1;
-    if (Game.HasAchiev('Cookie-dunker')) restoreHeight = 0;
     clickCountStarted = 0;
     clickCountFlag = 1;
 
@@ -656,4 +651,5 @@ function stop(){
     clearInterval(botInterval);
 }
 
+initialize();
 start();
