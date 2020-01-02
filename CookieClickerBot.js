@@ -424,7 +424,7 @@ function clog(message, thing) {
 }
 
 function calculateBestThing(){
-    if (['easter', 'halloween'].includes(Game.season)) {
+    if (['easter', 'halloween'].includes(Game.season) || !Game.HasAchiev('Moistburster')) {
         for (var i in Game.wrinklers) {
             var me = Game.wrinklers[i];
             if (me.phase > 0) {
