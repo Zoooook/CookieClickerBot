@@ -625,8 +625,10 @@ function initialize(){
     Game.Win('What\'s in a name');
     Game.Achievements['Here you go'].click();
     while (!Game.HasAchiev('Tabloid addiction')) Game.tickerL.click();
-    restoreHeight = Game.LeftBackground.canvas.height;
-    Game.LeftBackground.canvas.height = 0;
+    if (!Game.HasAchiev('Cookie-dunker')) {
+        restoreHeight = Game.LeftBackground.canvas.height;
+        Game.LeftBackground.canvas.height = 0;
+    }
 }
 
 var botInterval;
