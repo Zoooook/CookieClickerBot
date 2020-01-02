@@ -648,6 +648,7 @@ function start(){
     clickCountStarted = 0;
     clickCountFlag = 1;
 
+    clearInterval(botInterval);
     botInterval = setInterval(playTheGame);
 }
 
