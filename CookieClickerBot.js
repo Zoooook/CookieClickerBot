@@ -440,7 +440,7 @@ function calculateBestThing(){
 
         for (var i=0; i<Game.getWrinklersMax(); ++i) {
             var me = Game.wrinklers[i];
-            if (me.phase == 0 || me.hp <= .5) {
+            if (me.phase < 2 || me.hp <= .5) {
                 popWrinkler = 0;
                 break;
             }
