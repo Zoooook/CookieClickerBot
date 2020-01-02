@@ -1,9 +1,8 @@
-// take into account all achievements, careful with already gotten from previous ascension
+// take into account all achievements
 // buildings for achievements at 50 etc
 // double buildings + 5
 // sugar lumps
 // minigames
-// grandmapocalypse
 // ascension
 // math for auras and grandmas
 
@@ -482,12 +481,24 @@ function calculateBestThing(){
             return;
         }
 
-        if (me.pool != 'toggle' && !me.isVaulted() && me.name != 'One mind') {
+        if (
+            me.pool != 'toggle' && !me.isVaulted() &&
+            (me.name != 'Communal brainsweep' || !Game.HasAchiev('Elder slumber') || !Game.HasAchiev('Elder calm'))
+        ) {
             args[me.name] = ['', 0, me.name, 0, 0];
             things[me.name] = {type: 'upgrade', name: me.name, cps: calculateCps(...args[me.name])};
             things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
             things[me.name].price = calculateUpgradePrice(me.name, ...defaultArgs);
             things[me.name].value = things[me.name].percent / things[me.name].price;
+        }
+
+        if (
+            me.name == 'Elder Pledge'   && !Game.HasAchiev('Elder slumber') ||
+            me.name == 'Elder Covenant' && !Game.HasAchiev('Elder calm') ||
+            me.name == 'Revoke Elder Covenant'
+        ) {
+            things[me.name] = {type: 'upgrade', name: me.name, percent: 0, value: 0, ignore: 1};
+            things[me.name].price = calculateUpgradePrice(me.name, ...defaultArgs);
         }
     }
 
@@ -528,7 +539,7 @@ function calculateBestThing(){
             betterThings = [];
             for (var i in things) {
                 var thing = things[i];
-                if (thing.name != best.name && thing.price < best.price) {
+                if (thing.name != best.name && thing.price < best.price && !thing.ignore) {
                     var timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, ...args[thing.name])/thing.cps;
                     var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, ...args[best.name])/best.cps;
                     if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) betterThings.push(thing.name);
@@ -558,7 +569,7 @@ function calculateBestThing(){
                 Game.santaLevel == 5  && !Game.HasAchiev('Coming to town') ||
                 Game.santaLevel == 13 && !Game.HasAchiev('All hail Santa')
             ) args.santa[3] = 1;
-            
+
             things.santa = {type: 'santa', name: 'santa', cps: calculateCps(...args.santa)};
             things.santa.percent = (things.santa.cps / currentCps - 1) * 100;
             things.santa.price = santaPrice;
@@ -617,8 +628,11 @@ function calculateBestThing(){
             'Wrinklerspawn',
             'Omelette',
             '"egg"',
-            'A crumbly egg'
-        ].includes(thing.name) && (!best.price || thing.price <= best.price)) {
+            'A crumbly egg',
+            'Elder Pledge',
+            'Elder Covenant',
+            'Revoke Elder Covenant',
+        ].includes(thing.name) && thing.price <= best.price) {
             best = thing;
             clog('override', best);
         }
@@ -637,7 +651,7 @@ function playTheGame(){
             if (best.price < Game.cookies/1000) Game.Objects[best.name].buy(10);
             else Game.Objects[best.name].buy(1);
             if (!Game.HasAchiev('Just wrong')) Game.Objects['Grandma'].sell(1);
-        } else if (best.type == 'upgrade') Game.Upgrades[best.name].buy();
+        } else if (best.type == 'upgrade') Game.Upgrades[best.name].buy(1);
         else if (best.type == 'santa') {
             Game.specialTab='santa';
             Game.ToggleSpecialMenu(1);
