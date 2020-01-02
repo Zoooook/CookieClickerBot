@@ -443,6 +443,14 @@ function calculateBestThing(){
 
     for (var i in Game.UpgradesInStore) {
         var me = Game.UpgradesInStore[i];
+        if (me.name == 'Festive biscuit' && Game.santaLevel<14 && Game.season != 'christmas' && Game.Has('Titanium mouse')) {
+            things[me.name] = {type: 'upgrade', name: me.name, percent: 0, value: 0};
+            things[me.name].price = calculateUpgradePrice(me.name, ...defaultArgs);
+            best = things[me.name];
+            clog('best', best);
+            return;
+        }
+
         if (me.pool != 'toggle' && !me.isVaulted() && me.name != 'One mind') {
             args[me.name] = ['', 0, me.name, 0, 0];
             things[me.name] = {type: 'upgrade', name: me.name, cps: calculateCps(...args[me.name])};
