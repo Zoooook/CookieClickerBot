@@ -1,10 +1,11 @@
-// take into account all achievements
 // buildings for achievements at 50 etc
+// take into account all achievements
 // double buildings + 5
-// sugar lumps
-// minigames
+
 // ascension
+// sugar lumps
 // math for auras and grandmas
+// minigames
 
 document.getElementById("game").style.top=0
 
@@ -485,7 +486,7 @@ function calculateBestThing(){
         }
 
         if (
-            me.pool != 'toggle' && !me.isVaulted() && me.name != 'Chocolate egg' &&
+            me.pool != 'toggle' && !me.isVaulted() &&
             (me.name != 'Communal brainsweep' || !Game.HasAchiev('Elder slumber') || !Game.HasAchiev('Elder calm'))
         ) {
             args[me.name] = ['', 0, me.name, 0, 0];
@@ -651,7 +652,7 @@ function playTheGame(){
     if (best.name && buyThings && Game.cookies > best.price) {
         if (best.type == 'building'){
             if (best.price < Game.cookies/1000000) Game.Objects[best.name].buy(50);
-            if (best.price < Game.cookies/1000) Game.Objects[best.name].buy(10);
+            else if (best.price < Game.cookies/1000) Game.Objects[best.name].buy(10);
             else Game.Objects[best.name].buy(1);
             if (!Game.HasAchiev('Just wrong')) Game.Objects['Grandma'].sell(1);
         } else if (best.type == 'upgrade') Game.Upgrades[best.name].buy(1);
