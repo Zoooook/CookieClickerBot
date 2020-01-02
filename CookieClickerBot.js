@@ -1,11 +1,7 @@
-// get krumblor second aura
-
-// cheap upgrades
-// multi buy buildings if cheap
+// pop wrinklers for drops
 // take into account all achievements, careful with already gotten from previous ascension
 // buildings for achievements at 50 etc
 // double buildings + 5
-// easter
 // sugar lumps
 // minigames
 // grandmapocalypse
@@ -441,9 +437,22 @@ function calculateBestThing(){
         things[me.name].value = things[me.name].percent / things[me.name].price;
     }
 
+    var hasLovelyCookies = Game.Has('Pure heart biscuits') && Game.Has('Ardent heart biscuits') && Game.Has('Sour heart biscuits') && Game.Has('Weeping heart biscuits') && Game.Has('Golden heart biscuits') && Game.Has('Eternal heart biscuits');
+    var hasSpookyCookies = Game.Has('Skull cookies') && Game.Has('Ghost cookies') && Game.Has('Bat cookies') && Game.Has('Slime cookies') && Game.Has('Pumpkin cookies') && Game.Has('Eyeball cookies') && Game.Has('Spider cookies');
+    var eggs=0;
+    for (var i in Game.easterEggs) {
+        if (Game.HasUnlocked(Game.easterEggs[i])) eggs++;
+    }
+
     for (var i in Game.UpgradesInStore) {
         var me = Game.UpgradesInStore[i];
-        if (me.name == 'Festive biscuit' && Game.santaLevel<14 && Game.season != 'christmas' && Game.Has('Titanium mouse')) {
+        if (
+            me.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                           && Game.santaLevel  < 14 && Game.Has(  'Titanium mouse') ||
+            me.name == 'Lovesick biscuit' && Game.season != 'valentines'                                   && !hasLovelyCookies && Game.santaLevel == 14 && Game.Has('Fantasteel mouse') ||
+            me.name ==    'Bunny biscuit' && Game.season != 'easter'                         && eggs  < 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
+            me.name ==  'Ghostly biscuit' && Game.season != 'halloween' && !hasSpookyCookies && eggs == 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
+            me.name ==  'Festive biscuit' && Game.season != 'christmas' &&  hasSpookyCookies && eggs == 20 &&  hasLovelyCookies
+        ) {
             things[me.name] = {type: 'upgrade', name: me.name, percent: 0, value: 0};
             things[me.name].price = calculateUpgradePrice(me.name, ...defaultArgs);
             best = things[me.name];
