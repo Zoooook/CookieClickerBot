@@ -554,7 +554,11 @@ function calculateBestThing(){
 
         if (upgradeSanta) {
             args.santa = ['', 0, '', 0, 1];
-            if (Game.santaLevel == 5 || Game.santaLevel == 13) args.santa[3] = 1;
+            if (
+                Game.santaLevel == 5  && !Game.HasAchiev('Coming to town') ||
+                Game.santaLevel == 13 && !Game.HasAchiev('All hail Santa')
+            ) args.santa[3] = 1;
+            
             things.santa = {type: 'santa', name: 'santa', cps: calculateCps(...args.santa)};
             things.santa.percent = (things.santa.cps / currentCps - 1) * 100;
             things.santa.price = santaPrice;
