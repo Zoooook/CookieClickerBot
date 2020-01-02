@@ -587,7 +587,10 @@ function playTheGame(){
         best = {};
     } else if(Game.shimmers.length) Game.shimmers[0].pop();
     else if (!best.name) {
-        if(restoreHeight && Game.HasAchiev('Cookie-dunker')) Game.LeftBackground.canvas.height = restoreHeight;
+        if (restoreHeight && Game.HasAchiev('Cookie-dunker')) {
+            Game.LeftBackground.canvas.height = restoreHeight;
+            restoreHeight = 0;
+        }
         calculateBestThing();
     }
 
