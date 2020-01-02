@@ -468,6 +468,9 @@ function calculateBestThing(){
 
     for (var i in Game.UpgradesInStore) {
         var me = Game.UpgradesInStore[i];
+
+        if (me.name == 'Chocolate egg' && !me.isVaulted()) me.vault();
+
         if (
             me.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                           && Game.santaLevel  < 14 && Game.Has(  'Titanium mouse') ||
             me.name == 'Lovesick biscuit' && Game.season != 'valentines'                                   && !hasLovelyCookies && Game.santaLevel == 14 && Game.Has('Fantasteel mouse') ||
