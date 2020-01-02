@@ -520,21 +520,31 @@ function calculateBestThing(){
     }
 
     if (Game.Has('A crumbly egg')) {
-        if (Game.dragonLevel < 14) {
-            things.dragon = {type: 'dragon', name: 'dragon', percent: 0, price: 0, value: 0};
+        if (Game.dragonLevel < 24) things.dragon = {type: 'dragon', name: 'dragon', percent: 0, price: 0, value: 0};
 
-            if (Game.dragonLevel < 5) {
-                things.dragon.price = 1000000*Math.pow(2, Game.dragonLevel)
-                if (things.dragon.price < best.price) {
-                    best = things.dragon;
-                    clog('dragon', best);
+        if (Game.dragonLevel < 24) {
+            if (Game.dragonLevels[Math.max(Game.dragonLevel,5)].cost()) {
+                if (Game.dragonLevel < 22) {
+                    things.dragon.price = Game.ObjectsById[Math.max(Game.dragonLevel-5,0)].price*20/3;
+                    for(var i=Game.dragonLevel; i<5; ++i) things.dragon.price += 1000000*Math.pow(2, i);
+                } else {
+                    for (var i in Game.Objects) {
+                        var me = Game.Objects[i];
+                        things.dragon.price += me.price*20/3;
+                    }
                 }
-            } else if (Game.dragonLevels[Game.dragonLevel].cost()){
+
                 best = things.dragon;
                 clog('dragon', best);
             }
-        } else if (!Game.hasAura('Dragonflight')) {
+        }
+
+        if (Game.dragonLevel >= 14 && !Game.hasAura('Dragonflight')) {
             things.aura = {type: 'aura', name: 'Dragonflight', percent: 0, price: 0, value: 0};
+            best = things.aura;
+            clog('aura', best);
+        } else if (Game.dragonLevel == 24 && !Game.hasAura('Radiant Appetite')) {
+            things.aura = {type: 'aura', name: 'Radiant Appetite', percent: 0, price: 0, value: 0};
             best = things.aura;
             clog('aura', best);
         }
@@ -561,8 +571,6 @@ function calculateBestThing(){
             clog('override', best);
         }
     }
-
-    if (!best.name) console.log(things);
 }
 
 function playTheGame(){
