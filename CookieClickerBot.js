@@ -1,3 +1,4 @@
+// don't pop shiny wrinklers after achievement
 // guard against all percents = 0
 // take into account all achievements, careful with already gotten from previous ascension
 // buildings for achievements at 50 etc
@@ -427,7 +428,7 @@ function calculateBestThing(){
         for (var i in Game.wrinklers) {
             var me = Game.wrinklers[i];
             if (me.phase > 0) {
-                best = {type: 'wrinkler', name: i, percent: 0, price: 0, value: 0};
+                best = {type: 'wrinkler', name: i.toString(), percent: 0, price: 0, value: 0};
                 clog('wrinkler', best);
                 return;
             }
@@ -450,7 +451,7 @@ function calculateBestThing(){
         }
 
         if (popWrinkler) {
-            best = {type: 'wrinkler', name: bestWrinkler, percent: 0, price: 0, value: 0};
+            best = {type: 'wrinkler', name: bestWrinkler.toString(), percent: 0, price: 0, value: 0};
             clog('wrinkler', best);
             return;
         }
@@ -648,7 +649,7 @@ function playTheGame(){
             if (highestBuilding.id) Game.ObjectsById[highestBuilding.id].sacrifice(1);
             if (best.name == 'Dragonflight') Game.dragonAura=10;
             else if (best.name == 'Radiant Appetite') Game.dragonAura2=15;
-        } else if (best.type == 'wrinkler') Game.wrinklers[best.name].hp = -10;
+        } else if (best.type == 'wrinkler') Game.wrinklers[Number(best.name)].hp = -10;
 
         best = {};
     } else if(Game.shimmers.length && (Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) Game.shimmers[0].pop();
