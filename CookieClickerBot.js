@@ -1,14 +1,18 @@
-// harvest sugar lumps
 // buildings for achievements at 50 etc
-// take into account all achievements
+// take into account all achievements, upgrade unlocks
 // double buildings + 5
 
-// slow wrinkler popping based on buying upgrades
+// slow wrinkler popping based on buying upgrades, speed up for shiny wrinkler
 // ascension -- maybe need to take into account longterm expected production, ignore buffs
 // math for auras and grandmas
 // minigames, level objects
 
 document.getElementById("game").style.top=0
+
+function upgradeSpecial(name) {
+    if (name == 'santa') Game.UpgradeSanta();
+    else if (name == 'dragon') Game.UpgradeDragon();
+}
 
 function willHave(upgrade, testUpgrade) {
     return Game.Has(upgrade) || testUpgrade == upgrade;
@@ -33,69 +37,6 @@ function calculateTieredCpsMult(me, testBuy, testUpgrade){
     if (me.fortune && willHave(me.fortune.name, testUpgrade)) mult*=1.07;
     if (me.grandma && willHave(me.grandma.name, testUpgrade)) mult*=(1+amount(Game.Objects['Grandma'], testBuy)*0.01*(1/(me.id-1)));
     return mult;
-}
-
-function calculateClickCps(cookiesPs, testBuy, testUpgrade) {
-    var add=0;
-    if (willHave(   'Thousand fingers', testUpgrade)) add+=0.1;
-    if (willHave(    'Million fingers', testUpgrade)) add+=0.5;
-    if (willHave(    'Billion fingers', testUpgrade)) add+=5;
-    if (willHave(   'Trillion fingers', testUpgrade)) add+=50;
-    if (willHave('Quadrillion fingers', testUpgrade)) add+=500;
-    if (willHave('Quintillion fingers', testUpgrade)) add+=5000;
-    if (willHave( 'Sextillion fingers', testUpgrade)) add+=50000;
-    if (willHave( 'Septillion fingers', testUpgrade)) add+=500000;
-    if (willHave(  'Octillion fingers', testUpgrade)) add+=5000000;
-    var num=0;
-    for (var i in Game.Objects) {
-        num+=amount(Game.Objects[i], testBuy);
-    }
-    num-=amount(Game.Objects['Cursor'], testBuy);
-    add=add*num;
-
-    if (willHave(      'Plastic mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave(         'Iron mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave(     'Titanium mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave(   'Adamantium mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave(  'Unobtainium mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave(      'Eludium mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave(    'Wishalloy mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave(   'Fantasteel mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave(   'Nevercrack mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave(    'Armythril mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave('Technobsidian mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave(   'Plasmarble mouse', testUpgrade)) add+=cookiesPs*0.01;
-    if (willHave('Fortune #104',        testUpgrade)) add+=cookiesPs*0.01;
-
-    var mult=1;
-    if (willHave('Santa\'s helpers', testUpgrade)) mult*=1.1;
-    if (willHave('Cookie egg',       testUpgrade)) mult*=1.1;
-    if (willHave('Halo gloves',      testUpgrade)) mult*=1.1;
-    mult*=Game.eff('click');
-
-    if (Game.hasGod){
-        var godLvl=Game.hasGod('labor');
-        if (godLvl==1) mult*=1.15;
-        else if (godLvl==2) mult*=1.1;
-        else if (godLvl==3) mult*=1.05;
-    }
-
-    for (var i in Game.buffs){
-        if (typeof Game.buffs[i].multClick != 'undefined') mult*=Game.buffs[i].multClick;
-    }
-
-    mult*=1+Game.auraMult('Dragon Cursor')*0.05;
-
-    var out=mult*Game.ComputeCps(
-        1,
-        willHave('Reinforced index finger', testUpgrade) +
-        willHave('Carpal tunnel prevention cream', testUpgrade) +
-        willHave('Ambidextrous', testUpgrade),
-        add
-    );
-
-    if (Game.hasBuff('Cursed finger')) out=Game.buffs['Cursed finger'].power;
-    return out*clicksPerSecond;
 }
 
 function calculateCursorCps(testBuy, testUpgrade){
@@ -183,7 +124,75 @@ function calculateHeavenlyMultiplier(testUpgrade){
     return heavenlyMult;
 }
 
-function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta){
+function auraMultRadiantAppetite(testAura) {
+    if ([Game.dragonAuras[Game.dragonAura].name, Game.dragonAuras[Game.dragonAura2].name, testAura].includes('Radiant Appetite')) return 1;
+    return 0;
+}
+
+function calculateClickCps(cookiesPs, testBuy, testUpgrade) {
+    var add=0;
+    if (willHave(   'Thousand fingers', testUpgrade)) add+=0.1;
+    if (willHave(    'Million fingers', testUpgrade)) add+=0.5;
+    if (willHave(    'Billion fingers', testUpgrade)) add+=5;
+    if (willHave(   'Trillion fingers', testUpgrade)) add+=50;
+    if (willHave('Quadrillion fingers', testUpgrade)) add+=500;
+    if (willHave('Quintillion fingers', testUpgrade)) add+=5000;
+    if (willHave( 'Sextillion fingers', testUpgrade)) add+=50000;
+    if (willHave( 'Septillion fingers', testUpgrade)) add+=500000;
+    if (willHave(  'Octillion fingers', testUpgrade)) add+=5000000;
+    var num=0;
+    for (var i in Game.Objects) {
+        num+=amount(Game.Objects[i], testBuy);
+    }
+    num-=amount(Game.Objects['Cursor'], testBuy);
+    add=add*num;
+
+    if (willHave(      'Plastic mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave(         'Iron mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave(     'Titanium mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave(   'Adamantium mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave(  'Unobtainium mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave(      'Eludium mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave(    'Wishalloy mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave(   'Fantasteel mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave(   'Nevercrack mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave(    'Armythril mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave('Technobsidian mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave(   'Plasmarble mouse', testUpgrade)) add+=cookiesPs*0.01;
+    if (willHave('Fortune #104',        testUpgrade)) add+=cookiesPs*0.01;
+
+    var mult=1;
+    if (willHave('Santa\'s helpers', testUpgrade)) mult*=1.1;
+    if (willHave('Cookie egg',       testUpgrade)) mult*=1.1;
+    if (willHave('Halo gloves',      testUpgrade)) mult*=1.1;
+    mult*=Game.eff('click');
+
+    if (Game.hasGod){
+        var godLvl=Game.hasGod('labor');
+        if (godLvl==1) mult*=1.15;
+        else if (godLvl==2) mult*=1.1;
+        else if (godLvl==3) mult*=1.05;
+    }
+
+    for (var i in Game.buffs){
+        if (typeof Game.buffs[i].multClick != 'undefined') mult*=Game.buffs[i].multClick;
+    }
+
+    mult*=1+Game.auraMult('Dragon Cursor')*0.05;
+
+    var out=mult*Game.ComputeCps(
+        1,
+        willHave('Reinforced index finger', testUpgrade) +
+        willHave('Carpal tunnel prevention cream', testUpgrade) +
+        willHave('Ambidextrous', testUpgrade),
+        add
+    );
+
+    if (Game.hasBuff('Cursed finger')) out=Game.buffs['Cursed finger'].power;
+    return out*clicksPerSecond;
+}
+
+function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura){
     var cookiesPs=0;
     var mult=1;
     //add up effect bonuses from building minigames
@@ -320,7 +329,7 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
 
     if (willHave('Sugar baking', testUpgrade)) mult*=(1+Math.min(100,Game.lumps)*0.01);
 
-    mult*=1+Game.auraMult('Radiant Appetite');
+    mult*=1+auraMultRadiantAppetite(testAura);
 
     var n=Game.shimmerTypes['golden'].n;
     var auraMult=Game.auraMult('Dragon\'s Fortune');
@@ -364,101 +373,117 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
     return cookiesPs + calculateClickCps(cookiesPs, testBuy, testUpgrade);
 }
 
-function calculateBuildingPrice(buildingName, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta){
+function clog(thing, message) {
+    if (message) message += ' ';
+    else message = '';
+    message += thing.type + ': ' + thing.name;
+    if (thing.percent) message += ', +' + thing.percent + '%';
+    if (thing.price) message += ', $' + thing.price;
+    if (thing.value) message += ', value: ' + thing.value;
+    console.log(message);
+}
+
+function calculateBuildingPrice(buildingName, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
     var building = Game.Objects[buildingName];
     var price = building.basePrice*Math.pow(Game.priceIncrease,Math.max(0,building.amount-building.free));
 
-    if (willHave('Season savings',    testUpgrade)) price*=0.99;
-    if (willHave('Santa\'s dominion', testUpgrade)) price*=0.99;
-    if (willHave('Faberge egg',       testUpgrade)) price*=0.99;
-    if (willHave('Divine discount',   testUpgrade)) price*=0.99;
-    if (willHave('Fortune #100',      testUpgrade)) price*=0.99;
+    if (willHave('Season savings',    testUpgrade)) price *= 0.99;
+    if (willHave('Santa\'s dominion', testUpgrade)) price *= 0.99;
+    if (willHave('Faberge egg',       testUpgrade)) price *= 0.99;
+    if (willHave('Divine discount',   testUpgrade)) price *= 0.99;
+    if (willHave('Fortune #100',      testUpgrade)) price *= 0.99;
 
-    price*=1-Game.auraMult('Fierce Hoarder')*0.02;
-    if (Game.hasBuff('Everything must go')) price*=0.95;
-    if (Game.hasBuff('Crafty pixies'))      price*=0.98;
-    if (Game.hasBuff('Nasty goblins'))      price*=1.02;
-    if (building.fortune && willHave(building.fortune.name, testUpgrade)) price*=0.93;
-    price*=Game.eff('buildingCost');
+    price *= 1 - Game.auraMult('Fierce Hoarder') * 0.02;
+    if (Game.hasBuff('Everything must go')) price *= 0.95;
+    if (Game.hasBuff('Crafty pixies'))      price *= 0.98;
+    if (Game.hasBuff('Nasty goblins'))      price *= 1.02;
+    if (building.fortune && willHave(building.fortune.name, testUpgrade)) price *= 0.93;
+    price *= Game.eff('buildingCost');
 
     if (Game.hasGod){
-        var godLvl=Game.hasGod('creation');
-        if (godLvl==1) price*=0.93;
-        else if (godLvl==2) price*=0.95;
-        else if (godLvl==3) price*=0.98;
+        var godLvl = Game.hasGod('creation');
+        if (godLvl == 1) price *= 0.93;
+        else if (godLvl == 2) price *= 0.95;
+        else if (godLvl == 3) price *= 0.98;
     }
     return Math.ceil(price);
 }
 
-function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta){
+function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, tetAura) {
     var upgrade = Game.Upgrades[upgradeName];
-    var price=upgrade.basePrice;
+    var price = upgrade.basePrice;
 
-    if (upgrade.priceFunc) price=upgrade.priceFunc(this);
-    if (price==0) return 0;
+    if (upgrade.priceFunc) price = upgrade.priceFunc(this);
+    if (price == 0) return 0;
 
-    if (upgrade.pool!='prestige'){
-        if (willHave('Toy workshop', testUpgrade)) price*=0.95;
-        if (willHave('Five-finger discount', testUpgrade)) price*=Math.pow(0.99,amount(Game.Objects['Cursor'], testBuy)/100);
-        if (willHave('Santa\'s dominion',    testUpgrade)) price*=0.98;
-        if (willHave('Faberge egg',          testUpgrade)) price*=0.99;
-        if (willHave('Divine sales',         testUpgrade)) price*=0.99;
-        if (willHave('Fortune #100',         testUpgrade)) price*=0.99;
-        if (Game.hasBuff('Haggler\'s luck'))               price*=0.98;
-        if (Game.hasBuff('Haggler\'s misery'))             price*=1.02;
-        price*=1-Game.auraMult('Master of the Armory')*0.02;
-        price*=Game.eff('upgradeCost');
-        if (upgrade.pool=='cookie' && willHave('Divine bakeries', testUpgrade)) price/=5;
+    if (upgrade.pool != 'prestige'){
+        if (willHave('Toy workshop',         testUpgrade)) price *= 0.95;
+        if (willHave('Five-finger discount', testUpgrade)) price *= Math.pow(0.99,amount(Game.Objects['Cursor'], testBuy)/100);
+        if (willHave('Santa\'s dominion',    testUpgrade)) price *= 0.98;
+        if (willHave('Faberge egg',          testUpgrade)) price *= 0.99;
+        if (willHave('Divine sales',         testUpgrade)) price *= 0.99;
+        if (willHave('Fortune #100',         testUpgrade)) price *= 0.99;
+        if (Game.hasBuff('Haggler\'s luck'))               price *= 0.98;
+        if (Game.hasBuff('Haggler\'s misery'))             price *= 1.02;
+        price *= 1 - Game.auraMult('Master of the Armory') * 0.02;
+        price *= Game.eff('upgradeCost');
+        if (upgrade.pool == 'cookie' && willHave('Divine bakeries', testUpgrade)) price /= 5;
     }
     return Math.ceil(price);
 }
 
-function calculatePrice(type, name, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta) {
-    if (type == 'building') return calculateBuildingPrice(name, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta);
-    if (type == 'upgrade') return calculateUpgradePrice(name, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta);
-}
-
-function clog(message, thing) {
-    console.log(message + ' ' + thing.type + ': ' + thing.name + ', +' + thing.percent + '%, $' + thing.price + ', value: ' + thing.value);
+function calculatePrice(type, name, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
+    if (type == 'building') return calculateBuildingPrice(name, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura);
+    if (type == 'upgrade') return calculateUpgradePrice(name, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura);
 }
 
 function calculateBestThing(){
-    if (['easter', 'halloween'].includes(Game.season) || !Game.HasAchiev('Moistburster')) {
-        for (var i in Game.wrinklers) {
-            var me = Game.wrinklers[i];
-            if (me.phase == 2 && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
-                best = {type: 'wrinkler', name: i.toString(), percent: 0, price: 0, value: 0};
-                clog('wrinkler', best);
-                return;
-            }
-        }
-    } else {
-        var popWrinkler = 1;
-        var bestWrinkler = -1;
-        var bestWrinklerSucked = 0;
+    // Top priority is harvesting sugar lumps
+    if (Date.now() - Game.lumpT >= Game.lumpRipeAge) {
+        best = {type: 'sugar', name: 'lump', price: 0};
+        clog(best);
+        return;
+    }
 
-        for (var i=0; i<Game.getWrinklersMax(); ++i) {
-            var me = Game.wrinklers[i];
-            if (me.phase < 2 || me.hp <= .5) {
-                popWrinkler = 0;
-                break;
-            }
-            if (me.sucked > bestWrinklerSucked && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
-                bestWrinkler = i;
-                bestWrinklerSucked = me.sucked;
-            }
-        }
-
-        if (popWrinkler && bestWrinkler > -1) {
-            best = {type: 'wrinkler', name: bestWrinkler.toString(), percent: 0, price: 0, value: 0};
-            clog('wrinkler', best);
+    // Set aura (sacrifice a building) before any more buildings are built
+    if (Game.Has('A crumbly egg')) {
+        if (Game.dragonLevel >= 14 && !Game.hasAura('Dragonflight')) {
+            best = {type: 'aura', name: 'Dragonflight', price: 0};
+            clog(best);
+            return;
+        } else if (Game.dragonLevel == 24 && !Game.hasAura('Radiant Appetite')) {
+            best = {type: 'aura', name: 'Radiant Appetite', price: 0};
+            clog(best);
             return;
         }
     }
 
+    // Pop phase 2 wrinklers for drops
+    if (['easter', 'halloween'].includes(Game.season) || !Game.HasAchiev('Moistburster')) {
+        for (var i in Game.wrinklers) {
+            var me = Game.wrinklers[i];
+            if (me.phase == 2 && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
+                best = {type: 'wrinkler', name: i.toString(), price: 0};
+                clog(best);
+                return;
+            }
+        }
+    // Pop wrinklers for achievements
+    } else if (!Game.HasAchiev('Moistburster') || !Game.HasAchiev('Last Chance to See')) {
+        for (var i in Game.wrinklers) {
+            var me = Game.wrinklers[i];
+            if (me.phase && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
+                best = {type: 'wrinkler', name: i.toString(), price: 0};
+                clog(best);
+                return;
+            }
+        }
+    }
+
+    // Start best purchase calculation
     var things = {};
     var args = {};
-    var defaultArgs = ['', 0, '', 0, 0];
+    var defaultArgs = ['', 0, '', 0, 0, ''];
     var currentCps = calculateCps(...defaultArgs);
 
     var hasLovelyCookies = Game.Has('Pure heart biscuits') && Game.Has('Ardent heart biscuits') && Game.Has('Sour heart biscuits') && Game.Has('Weeping heart biscuits') && Game.Has('Golden heart biscuits') && Game.Has('Eternal heart biscuits');
@@ -472,9 +497,10 @@ function calculateBestThing(){
         var me = Game.UpgradesInStore[i];
 
         if ((
-            me.name == 'Chocolate egg' || (me.name == 'Communal brainsweep' && Game.HasAchiev('Elder slumber') && Game.HasAchiev('Elder calm'))
+            me.name == 'Chocolate egg' || (me.name == 'Communal brainsweep' && Game.HasAchiev('Elder slumber') && Game.HasAchiev('Elder calm') && Game.HasAchiev('Moistburster'))
         ) && !me.isVaulted()) me.vault();
 
+        // Activate optimal season
         if (
             me.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                           && Game.santaLevel  < 14 && Game.Has(  'Titanium mouse') ||
             me.name == 'Lovesick biscuit' && Game.season != 'valentines'                                   && !hasLovelyCookies && Game.santaLevel == 14 && Game.Has('Fantasteel mouse') ||
@@ -484,12 +510,12 @@ function calculateBestThing(){
         ) {
             best = {type: 'upgrade', name: me.name, percent: 0, value: 0};
             best.price = calculateUpgradePrice(me.name, ...defaultArgs);
-            clog('season', best);
+            clog(best, 'season');
             return;
         }
 
         if (me.pool != 'toggle' && !me.isVaulted()) {
-            args[me.name] = ['', 0, me.name, 0, 0];
+            args[me.name] = ['', 0, me.name, 0, 0, ''];
             things[me.name] = {type: 'upgrade', name: me.name, cps: calculateCps(...args[me.name])};
             things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
             things[me.name].price = calculateUpgradePrice(me.name, ...defaultArgs);
@@ -500,15 +526,13 @@ function calculateBestThing(){
             me.name == 'Elder Pledge'   && !Game.HasAchiev('Elder slumber') ||
             me.name == 'Elder Covenant' && Game.Upgrades['Elder Pledge'].unlocked==0 ||
             me.name == 'Revoke Elder Covenant'
-        ) {
-            things[me.name] = {type: 'upgrade', name: me.name, percent: 0, value: 0, ignore: 1};
-            things[me.name].price = calculateUpgradePrice(me.name, ...defaultArgs);
-        }
+        ) things[me.name] = {type: 'upgrade', name: me.name, price: calculateUpgradePrice(me.name, ...defaultArgs), ignore: 1};
+
     }
 
     for (var i in Game.Objects) {
         var me = Game.Objects[i];
-        args[me.name] = [me.name, 1, '', 0, 0];
+        args[me.name] = [me.name, 1, '', 0, 0, ''];
         things[me.name] = {type: 'building', name: me.name, cps: calculateCps(...args[me.name])};
         things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
         things[me.name].price = calculateBuildingPrice(me.name, ...defaultArgs);
@@ -517,6 +541,7 @@ function calculateBestThing(){
 
     console.log(things);
 
+    // Find best value purchase
     best = {value: 0};
     for (var i in things) {
         var thing = things[i];
@@ -524,7 +549,7 @@ function calculateBestThing(){
     }
 
     if (best.name) {
-        clog('best', best);
+        clog(best, 'best');
 
         var betterThings = [best.name];
 
@@ -537,9 +562,10 @@ function calculateBestThing(){
 
             if (best.name != better.name) {
                 best = better;
-                clog('better', best);
+                clog(best, 'better');
             }
 
+            // Find better purchases for speed (sometimes by lowering prices)
             betterThings = [];
             for (var i in things) {
                 var thing = things[i];
@@ -552,7 +578,8 @@ function calculateBestThing(){
         }
     }
 
-    if (Game.Has('A festive hat') && Game.santaLevel<14 && !Game.santaDrops.includes(best.name)) {
+    // Override best purchase with Christmas upgrades
+    if (Game.Has('A festive hat') && Game.santaLevel<14 && (!best.name || !Game.santaDrops.includes(best.name))) {
         var santaPrice = Math.pow(Game.santaLevel+1,Game.santaLevel+1);
 
         var upgradeSanta = 1;
@@ -560,63 +587,101 @@ function calculateBestThing(){
             var thing = things[i];
             if (Game.santaDrops.includes(thing.name)) {
                 upgradeSanta = 0;
-                if (thing.price + santaPrice < best.price) {
+                // Santa unlocks take priority to continue unlocking them
+                if (!best.name || thing.price + santaPrice < best.price) {
                     best = thing;
-                    clog('santa', best);
+                    clog(best, 'santa');
                 }
             }
         }
 
+        // Don't upgrade Santa while Santa unlocks are in the store, because their price will jump
         if (upgradeSanta) {
-            args.santa = ['', 0, '', 0, 1];
+            args.santa = ['', 0, '', 0, 1, ''];
             if (
                 Game.santaLevel == 5  && !Game.HasAchiev('Coming to town') ||
                 Game.santaLevel == 13 && !Game.HasAchiev('All hail Santa')
             ) args.santa[3] = 1;
 
-            things.santa = {type: 'santa', name: 'santa', cps: calculateCps(...args.santa)};
+            things.santa = {type: 'upgrade', name: 'santa', cps: calculateCps(...args.santa)};
             things.santa.percent = (things.santa.cps / currentCps - 1) * 100;
             things.santa.price = santaPrice;
             things.santa.value = things.santa.percent / things.santa.price;
 
-            if (things.santa.value > best.value || things.santa.price <= best.price) {
+            // Override best purchase if Santa is cheaper or faster
+            if (!best.name || things.santa.price <= best.price) {
                 best = things.santa;
-                clog('santa', best);
+                clog(best);
+            } else if (things.santa.value > best.value) {
+                var timeTillBothThingsIfFirst = things.santa.price/currentCps + calculatePrice(best.type, best.name, ...args.santa)/things.santa.cps;
+                var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'santa', ...args[best.name])/best.cps;
+                if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
+                    best = things.santa;
+                    clog(best, 'better');
+                }
             }
         }
     }
 
-    if (Game.Has('A crumbly egg')) {
-        if (Game.dragonLevel < 24) things.dragon = {type: 'dragon', name: 'dragon', percent: 0, price: 0, value: 0};
+    // Override best purchase with dragon upgrades
+    if (Game.Has('A crumbly egg') && Game.dragonLevel < 24 && Game.dragonLevels[Math.max(Game.dragonLevel,5)].cost()) {
+        things.dragon = {type: 'upgrade', name: 'dragon', price: 0};
+        var buildingIndex;
 
-        if (Game.dragonLevel < 24) {
-            if (Game.dragonLevels[Math.max(Game.dragonLevel,5)].cost()) {
-                if (Game.dragonLevel < 22) {
-                    things.dragon.price = Game.ObjectsById[Math.max(Game.dragonLevel-5,0)].price*20/3;
-                    for(var i=Game.dragonLevel; i<5; ++i) things.dragon.price += 1000000*Math.pow(2, i);
-                } else {
-                    for (var i in Game.Objects) {
-                        var me = Game.Objects[i];
-                        things.dragon.price += me.price*20/3;
+        if (Game.dragonLevel < 22) {
+            buildingIndex = Math.max(Game.dragonLevel-5,0);
+            things.dragon.price = Game.ObjectsById[buildingIndex].price*20/3;
+            for(var i=Game.dragonLevel; i<5; ++i) things.dragon.price += 1000000*Math.pow(2, i);
+        } else {
+            for (var i in Game.Objects) {
+                var me = Game.Objects[i];
+                things.dragon.price += me.price*20/3;
+            }
+            if (Game.dragonLevel == 22) things.dragon.price += Game.Upgrades['Dragon cookie'].getPrice();
+        }
+
+        if (!best.name) {
+            best = things.dragon;
+            clog(best, 'best');
+        // Sacrifice buildings before buying any more of them
+        } else if (Game.dragonLevel < 21) {
+            if (Game.dragonLevel == 13 || best.type == 'building' && (
+                best.name == Game.ObjectsById[buildingIndex].name ||
+                best.name == Game.ObjectsById[buildingIndex+1].name && Game.ObjectsById[buildingIndex+1].amount >= 100
+            )) {
+                best = things.dragon;
+                clog(best, 'override');
+            }
+        } else {
+            if (best.type == 'building') {
+                best = things.dragon;
+                clog(best, 'override');
+            // Override upgrade purchases if dragon is better
+            } else if (Game.dragonLevel > 21) {
+                args.dragon = ['', 0, '', 0, 0, ''];
+                if (Game.dragonLevel == 22) args.dragon[2] = 'Dragon cookie';
+                else if (Game.dragonLevel == 23) args.dragon[5] = 'Radiant Appetite';
+
+                things.dragon.cps = calculateCps(...args.dragon);
+                things.dragon.percent = (things.dragon.cps / currentCps - 1) * 100;
+                things.dragon.value = things.dragon.percent / things.dragon.price;
+
+                if (things.dragon.value > best.value && things.dragon.price < best.price) {
+                    best = things.dragon;
+                    clog(best, 'best');
+                } else if (things.dragon.value > best.value || things.dragon.price < best.price) {
+                    var timeTillBothThingsIfFirst = things.dragon.price/currentCps + calculatePrice(best.type, best.name, ...args.dragon)/things.dragon.cps;
+                    var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'dragon', ...args[best.name])/best.cps;
+                    if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
+                        best = things.dragon;
+                        clog(best, 'better');
                     }
                 }
-
-                best = things.dragon;
-                clog('dragon', best);
             }
-        }
-
-        if (Game.dragonLevel >= 14 && !Game.hasAura('Dragonflight')) {
-            things.aura = {type: 'aura', name: 'Dragonflight', percent: 0, price: 0, value: 0};
-            best = things.aura;
-            clog('aura', best);
-        } else if (Game.dragonLevel == 24 && !Game.hasAura('Radiant Appetite')) {
-            things.aura = {type: 'aura', name: 'Radiant Appetite', percent: 0, price: 0, value: 0};
-            best = things.aura;
-            clog('aura', best);
         }
     }
 
+    // Override best purchase with specific upgrades if cheaper
     for (var i in things) {
         var thing = things[i];
         if ([
@@ -636,15 +701,52 @@ function calculateBestThing(){
             'Elder Pledge',
             'Elder Covenant',
             'Revoke Elder Covenant',
-        ].includes(thing.name) && thing.price <= best.price) {
+        ].includes(thing.name) && (!best.name || thing.price <= best.price)) {
             best = thing;
-            clog('override', best);
+            clog(best, 'override');
         }
     }
 
+    // Pop biggest wrinkler if best purchase is more than an hour out at base Cps, and wrinklers will get there
+    if (!Game.buffs.length) {
+        var bestWrinkler = -1;
+        var bestWrinklerSucked = 0;
+        var totalSucked = 0;
+
+        var toSuck = 1.1;
+        if (Game.Has('Sacrilegious corruption')) toSuck *= 1.05;
+        if (Game.Has('Wrinklerspawn')) toSuck *= 1.05;
+        if (Game.hasGod) {
+            var godLvl = Game.hasGod('scorn');
+            if (godLvl == 1) toSuck *= 1.15;
+            else if (godLvl == 2) toSuck *= 1.1;
+            else if (godLvl == 3) toSuck *= 1.05;
+        }
+
+        for (var i=0; i<Game.getWrinklersMax(); ++i) {
+            var me = Game.wrinklers[i];
+            if (!me.type) {
+                totalSucked += me.sucked;
+                if (me.sucked > bestWrinklerSucked) {
+                    bestWrinkler = i;
+                    bestWrinklerSucked = me.sucked;
+                }
+            }
+        }
+
+        var cookieDiff = best.price - Game.cookies;
+        if (totalSucked*toSuck >= cookieDiff && cookieDiff > currentCps * 60 * 60) {
+            best = {type: 'wrinkler', name: bestWrinkler.toString(), price: 0};
+            clog(best);
+            return;
+        }
+    }
+
+    // Do nothing and make it really expensive, to stop recalculating and focus on clicking
+    // This should only happen during Cursed finger buff
     if (!best.name) {
-        best = {type: 'nothing', name: 'nothing', percent: 0, price: (Game.cookiesEarned+Game.cookiesReset)*1000000000, value: 0};
-        clog('nothing', best);
+        best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned+Game.cookiesReset)*1000000000};
+        clog(best);
     }
 }
 
@@ -655,15 +757,12 @@ function playTheGame(){
             else if (best.price < Game.cookies/1000) Game.Objects[best.name].buy(10);
             else Game.Objects[best.name].buy(1);
             if (!Game.HasAchiev('Just wrong')) Game.Objects['Grandma'].sell(1);
-        } else if (best.type == 'upgrade') Game.Upgrades[best.name].buy(1);
-        else if (best.type == 'santa') {
-            Game.specialTab='santa';
-            Game.ToggleSpecialMenu(1);
-            Game.UpgradeSanta();
-        } else if (best.type == 'dragon') {
-            Game.specialTab='dragon';
-            Game.ToggleSpecialMenu(1);
-            Game.UpgradeDragon();
+        } else if (best.type == 'upgrade') {
+            if (['santa', 'dragon'].includes(best.name)) {
+                Game.specialTab=best.name;
+                Game.ToggleSpecialMenu(1);
+                upgradeSpecial(best.name);
+            } else Game.Upgrades[best.name].buy(1);
         } else if (best.type == 'aura') {
             Game.specialTab='dragon';
             Game.ToggleSpecialMenu(1);
@@ -711,6 +810,16 @@ function playTheGame(){
     Game.ClickCookie();
 }
 
+var botInterval;
+var best;
+var buyThings = 1;
+var restoreHeight;
+var clickCountFlag;
+var clickCountStart;
+var clickCountStarted;
+var clicksPerSecond = 150;
+var clickCount = 0;
+
 function initialize(){
     Game.Win('Cheated cookies taste awful');
     Game.Win('Third-party');
@@ -726,16 +835,14 @@ function initialize(){
     }
 }
 
-var botInterval;
-var best;
-var buyThings = 1;
-var restoreHeight;
-var clickCountFlag;
-var clickCountStart;
-var clickCountStarted;
+function start(){
+    best = {};
+    clickCountStarted = 0;
+    clickCountFlag = 1;
 
-var clicksPerSecond = 150;
-var clickCount = 0;
+    stop();
+    botInterval = setInterval(playTheGame);
+}
 
 function startBuying(){
     buyThings = 1;
@@ -743,15 +850,6 @@ function startBuying(){
 
 function stopBuying(){
     buyThings = 0;
-}
-
-function start(){
-    best = {};
-    clickCountStarted = 0;
-    clickCountFlag = 1;
-
-    clearInterval(botInterval);
-    botInterval = setInterval(playTheGame);
 }
 
 function stop(){
