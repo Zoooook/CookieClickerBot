@@ -1,12 +1,12 @@
-// slow wrinkler popping based on buying upgrades
+// harvest sugar lumps
 // buildings for achievements at 50 etc
 // take into account all achievements
 // double buildings + 5
 
-// ascension
-// sugar lumps
+// slow wrinkler popping based on buying upgrades
+// ascension -- maybe need to take into account longterm expected production, ignore buffs
 // math for auras and grandmas
-// minigames
+// minigames, level objects
 
 document.getElementById("game").style.top=0
 
@@ -426,7 +426,7 @@ function calculateBestThing(){
     if (['easter', 'halloween'].includes(Game.season) || !Game.HasAchiev('Moistburster')) {
         for (var i in Game.wrinklers) {
             var me = Game.wrinklers[i];
-            if (me.phase > 0 && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
+            if (me.phase == 2 && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
                 best = {type: 'wrinkler', name: i.toString(), percent: 0, price: 0, value: 0};
                 clog('wrinkler', best);
                 return;
