@@ -1,4 +1,4 @@
-// buildings for achievements at 50 etc
+// log click cps multiple of base cps
 // take into account all achievements, upgrade unlocks
 // double buildings + 5
 
@@ -18,11 +18,11 @@ function willHave(upgrade, testUpgrade) {
     return Game.Has(upgrade) || testUpgrade == upgrade;
 }
 
-function amount(building, testBuy) {
-    return building.amount + (testBuy == building.name);
+function amount(building, testBuy, testBuyCount) {
+    return building.amount + (testBuy == building.name) * testBuyCount;
 }
 
-function calculateTieredCpsMult(me, testBuy, testUpgrade) {
+function calculateTieredCpsMult(me, testBuy, testBuyCount, testUpgrade) {
     var mult = 1;
     for (var i in me.tieredUpgrades) {
         if (!Game.Tiers[me.tieredUpgrades[i].tier].special && willHave(me.tieredUpgrades[i].name, testUpgrade)) mult *= 2;
@@ -30,16 +30,16 @@ function calculateTieredCpsMult(me, testBuy, testUpgrade) {
     for (var i in me.synergies) {
         var syn = me.synergies[i];
         if (willHave(syn.name, testUpgrade)){
-            if      (syn.buildingTie1.name == me.name) mult *= (1+0.05 *amount(syn.buildingTie2, testBuy));
-            else if (syn.buildingTie2.name == me.name) mult *= (1+0.001*amount(syn.buildingTie1, testBuy));
+            if      (syn.buildingTie1.name == me.name) mult *= (1+0.05 *amount(syn.buildingTie2, testBuy, testBuyCount));
+            else if (syn.buildingTie2.name == me.name) mult *= (1+0.001*amount(syn.buildingTie1, testBuy, testBuyCount));
         }
     }
     if (me.fortune && willHave(me.fortune.name, testUpgrade)) mult *= 1.07;
-    if (me.grandma && willHave(me.grandma.name, testUpgrade)) mult *= (1 + amount(Game.Objects['Grandma'], testBuy) * 0.01 * (1/(me.id-1)));
+    if (me.grandma && willHave(me.grandma.name, testUpgrade)) mult *= (1 + amount(Game.Objects['Grandma'], testBuy, testBuyCount) * 0.01 * (1/(me.id-1)));
     return mult;
 }
 
-function calculateCursorCps(testBuy, testUpgrade) {
+function calculateCursorCps(testBuy, testBuyCount, testUpgrade) {
     var add = 0;
     if (willHave(   'Thousand fingers', testUpgrade)) add += 0.1;
     if (willHave(    'Million fingers', testUpgrade)) add += 0.5;
@@ -58,7 +58,7 @@ function calculateCursorCps(testBuy, testUpgrade) {
     add = add * num;
 
     var mult = 1;
-    mult *= calculateTieredCpsMult(Game.Objects['Cursor'], testBuy, testUpgrade);
+    mult *= calculateTieredCpsMult(Game.Objects['Cursor'], testBuy, testBuyCount, testUpgrade);
     mult *= Game.eff('cursorCps');
     return Game.ComputeCps(
         0.1,
@@ -67,7 +67,7 @@ function calculateCursorCps(testBuy, testUpgrade) {
     ) * mult;
 }
 
-function calculateGrandmaCps(testBuy, testUpgrade) {
+function calculateGrandmaCps(testBuy, testBuyCount, testUpgrade) {
     var mult = 1;
     for (var i in Game.GrandmaSynergies) {
         if (willHave(Game.GrandmaSynergies[i], testUpgrade)) mult *= 2;
@@ -78,16 +78,16 @@ function calculateGrandmaCps(testBuy, testUpgrade) {
     if (willHave('Elderwort biscuits',             testUpgrade)) mult *= 1.02;
 
     mult *= Game.eff('grandmaCps');
-    mult *= calculateTieredCpsMult(Game.Objects['Grandma'], testBuy, testUpgrade);
+    mult *= calculateTieredCpsMult(Game.Objects['Grandma'], testBuy, testBuyCount, testUpgrade);
 
     var add = 0;
-    if (willHave('One mind',            testUpgrade)) add += amount(Game.Objects['Grandma'], testBuy)*0.02;
-    if (willHave('Communal brainsweep', testUpgrade)) add += amount(Game.Objects['Grandma'], testBuy)*0.02;
-    if (willHave('Elder Pact',          testUpgrade)) add += amount(Game.Objects['Portal'],  testBuy)*0.05;
+    if (willHave('One mind',            testUpgrade)) add += amount(Game.Objects['Grandma'], testBuy, testBuyCount) * 0.02;
+    if (willHave('Communal brainsweep', testUpgrade)) add += amount(Game.Objects['Grandma'], testBuy, testBuyCount) * 0.02;
+    if (willHave('Elder Pact',          testUpgrade)) add += amount(Game.Objects['Portal'],  testBuy, testBuyCount) * 0.05;
 
     var num = 0;
     for (var i in Game.Objects) {
-        if (Game.Objects[i].name!='Grandma') num += amount(Game.Objects[i], testBuy);
+        if (Game.Objects[i].name!='Grandma') num += amount(Game.Objects[i], testBuy, testBuyCount);
     }
 
     mult *= 1 + Game.auraMult('Elder Battalion') * 0.01 * num;
@@ -95,12 +95,12 @@ function calculateGrandmaCps(testBuy, testUpgrade) {
     return (Game.Objects['Grandma'].baseCps + add) * mult;
 }
 
-function calculateBuildingCps(buildingName, testBuy, testUpgrade) {
-    if (buildingName == 'Cursor')  return calculateCursorCps( testBuy, testUpgrade);
-    if (buildingName == 'Grandma') return calculateGrandmaCps(testBuy, testUpgrade);
+function calculateBuildingCps(buildingName, testBuy, testBuyCount, testUpgrade) {
+    if (buildingName == 'Cursor')  return calculateCursorCps( testBuy, testBuyCount, testUpgrade);
+    if (buildingName == 'Grandma') return calculateGrandmaCps(testBuy, testBuyCount, testUpgrade);
 
     var mult = 1;
-    mult *= calculateTieredCpsMult(Game.Objects[buildingName], testBuy, testUpgrade);
+    mult *= calculateTieredCpsMult(Game.Objects[buildingName], testBuy, testBuyCount, testUpgrade);
     return Game.Objects[buildingName].baseCps * mult;
 }
 
@@ -133,7 +133,7 @@ function auraMultRadiantAppetite(testAura) {
     return 0;
 }
 
-function calculateClickCps(cookiesPs, testBuy, testUpgrade) {
+function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
     var add = 0;
     if (willHave(   'Thousand fingers', testUpgrade)) add += 0.1;
     if (willHave(    'Million fingers', testUpgrade)) add += 0.5;
@@ -146,9 +146,9 @@ function calculateClickCps(cookiesPs, testBuy, testUpgrade) {
     if (willHave(  'Octillion fingers', testUpgrade)) add += 5000000;
     var num = 0;
     for (var i in Game.Objects) {
-        num += amount(Game.Objects[i], testBuy);
+        num += amount(Game.Objects[i], testBuy, testBuyCount);
     }
-    num -= amount(Game.Objects['Cursor'], testBuy);
+    num -= amount(Game.Objects['Cursor'], testBuy, testBuyCount);
     add = add * num;
 
     if (willHave(      'Plastic mouse', testUpgrade)) add += cookiesPs*0.01;
@@ -267,9 +267,9 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
 
     for (var i in Game.Objects) {
         var me = Game.Objects[i];
-        var storedCps = calculateBuildingCps(me.name, testBuy, testUpgrade);
+        var storedCps = calculateBuildingCps(me.name, testBuy, testBuyCount, testUpgrade);
         if (Game.ascensionMode != 1) storedCps *= (1 + me.level * 0.01) * buildMult;
-        var storedTotalCps = amount(me, testBuy) * storedCps;
+        var storedTotalCps = amount(me, testBuy, testBuyCount) * storedCps;
         cookiesPs += storedTotalCps;
     }
 
@@ -289,21 +289,21 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
 
     var catMult = 1;
 
-    if (willHave('Kitten helpers',                            testUpgrade)) catMult *= (1 + Game.milkProgress * 0.1   * milkMult);
-    if (willHave('Kitten workers',                            testUpgrade)) catMult *= (1 + Game.milkProgress * 0.125 * milkMult);
-    if (willHave('Kitten engineers',                          testUpgrade)) catMult *= (1 + Game.milkProgress * 0.15  * milkMult);
-    if (willHave('Kitten overseers',                          testUpgrade)) catMult *= (1 + Game.milkProgress * 0.175 * milkMult);
-    if (willHave('Kitten managers',                           testUpgrade)) catMult *= (1 + Game.milkProgress * 0.2   * milkMult);
-    if (willHave('Kitten accountants',                        testUpgrade)) catMult *= (1 + Game.milkProgress * 0.2   * milkMult);
-    if (willHave('Kitten specialists',                        testUpgrade)) catMult *= (1 + Game.milkProgress * 0.2   * milkMult);
-    if (willHave('Kitten experts',                            testUpgrade)) catMult *= (1 + Game.milkProgress * 0.2   * milkMult);
-    if (willHave('Kitten consultants',                        testUpgrade)) catMult *= (1 + Game.milkProgress * 0.2   * milkMult);
-    if (willHave('Kitten assistants to the regional manager', testUpgrade)) catMult *= (1 + Game.milkProgress * 0.175 * milkMult);
-    if (willHave('Kitten marketeers',                         testUpgrade)) catMult *= (1 + Game.milkProgress * 0.15  * milkMult);
-    if (willHave('Kitten analysts',                           testUpgrade)) catMult *= (1 + Game.milkProgress * 0.125 * milkMult);
-    if (willHave('Kitten executives',                         testUpgrade)) catMult *= (1 + Game.milkProgress * 0.115 * milkMult);
-    if (willHave('Kitten angels',                             testUpgrade)) catMult *= (1 + Game.milkProgress * 0.1   * milkMult);
-    if (willHave('Fortune #103',                              testUpgrade)) catMult *= (1 + Game.milkProgress * 0.05  * milkMult);
+    if (willHave('Kitten helpers',                            testUpgrade)) catMult *= (1 + milkProgress * 0.1   * milkMult);
+    if (willHave('Kitten workers',                            testUpgrade)) catMult *= (1 + milkProgress * 0.125 * milkMult);
+    if (willHave('Kitten engineers',                          testUpgrade)) catMult *= (1 + milkProgress * 0.15  * milkMult);
+    if (willHave('Kitten overseers',                          testUpgrade)) catMult *= (1 + milkProgress * 0.175 * milkMult);
+    if (willHave('Kitten managers',                           testUpgrade)) catMult *= (1 + milkProgress * 0.2   * milkMult);
+    if (willHave('Kitten accountants',                        testUpgrade)) catMult *= (1 + milkProgress * 0.2   * milkMult);
+    if (willHave('Kitten specialists',                        testUpgrade)) catMult *= (1 + milkProgress * 0.2   * milkMult);
+    if (willHave('Kitten experts',                            testUpgrade)) catMult *= (1 + milkProgress * 0.2   * milkMult);
+    if (willHave('Kitten consultants',                        testUpgrade)) catMult *= (1 + milkProgress * 0.2   * milkMult);
+    if (willHave('Kitten assistants to the regional manager', testUpgrade)) catMult *= (1 + milkProgress * 0.175 * milkMult);
+    if (willHave('Kitten marketeers',                         testUpgrade)) catMult *= (1 + milkProgress * 0.15  * milkMult);
+    if (willHave('Kitten analysts',                           testUpgrade)) catMult *= (1 + milkProgress * 0.125 * milkMult);
+    if (willHave('Kitten executives',                         testUpgrade)) catMult *= (1 + milkProgress * 0.115 * milkMult);
+    if (willHave('Kitten angels',                             testUpgrade)) catMult *= (1 + milkProgress * 0.1   * milkMult);
+    if (willHave('Fortune #103',                              testUpgrade)) catMult *= (1 + milkProgress * 0.05  * milkMult);
 
     mult *= catMult;
 
@@ -376,13 +376,14 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
 
     cookiesPs *= mult;
 
-    return cookiesPs + calculateClickCps(cookiesPs, testBuy, testUpgrade);
+    return cookiesPs + calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade);
 }
 
 function clog(thing, message) {
     if (message) message += ' ';
     else message = '';
     message += thing.type + ': ' + thing.name;
+    if (thing.buyCount) message += ' x' + thing.buyCount;
     if (thing.percent) message += ', +' + thing.percent + '%';
     if (thing.price) message += ', $' + thing.price;
     if (thing.value) message += ', value: ' + thing.value;
@@ -415,7 +416,7 @@ function calculateBuildingPrice(buildingName, testBuy, testBuyCount, testUpgrade
     return Math.ceil(price);
 }
 
-function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, tetAura) {
+function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
     var upgrade = Game.Upgrades[upgradeName];
     var price = upgrade.basePrice;
 
@@ -424,7 +425,7 @@ function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, 
 
     if (upgrade.pool != 'prestige') {
         if (willHave('Toy workshop',         testUpgrade)) price *= 0.95;
-        if (willHave('Five-finger discount', testUpgrade)) price *= Math.pow(0.99, amount(Game.Objects['Cursor'], testBuy) / 100);
+        if (willHave('Five-finger discount', testUpgrade)) price *= Math.pow(0.99, amount(Game.Objects['Cursor'], testBuy, testBuyCount) / 100);
         if (willHave('Santa\'s dominion',    testUpgrade)) price *= 0.98;
         if (willHave('Faberge egg',          testUpgrade)) price *= 0.99;
         if (willHave('Divine sales',         testUpgrade)) price *= 0.99;
@@ -438,12 +439,39 @@ function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, 
     return Math.ceil(price);
 }
 
-function calculatePrice(type, name, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
-    if (type == 'building') return calculateBuildingPrice(name, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura);
-    if (type == 'upgrade')  return calculateUpgradePrice( name, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura);
+function calculatePrice(type, name, args) {
+    if (type == 'building') return calculateBuildingPrice(name, ...args);
+    if (type == 'upgrade')  return calculateUpgradePrice( name, ...args);
+}
+
+function calculateBuildingPriceMultiplier(buyCount) {
+    var mult = 0;
+    var add = 1;
+    for (var i=0; i<buyCount; ++i) {
+        mult += add;
+        add *= 1.15;
+    }
+    return mult;
+}
+
+function createMultiBuildingThing(args) {
+    var thing = {
+        type: 'building',
+        name: args[0],
+        buyCount: args[1],
+        cps: calculateCps(...args),
+        basePrice: calculateBuildingPrice(args[0], ...defaultArgs),
+    };
+    thing.percent = (thing.cps / currentCps - 1) * 100;
+    thing.price = thing.basePrice * calculateBuildingPriceMultiplier(args[1]);
+    thing.value = thing.percent / thing.price;
+
+    return thing;
 }
 
 function doOrCalculateBestThing(){
+    console.log('\n');
+
     // Harvest any ripe sugar lumps
     if (Date.now() - Game.lumpT >= Game.lumpRipeAge) {
         clog({type: 'sugar', name: 'lump'});
@@ -487,11 +515,21 @@ function doOrCalculateBestThing(){
     // Start best purchase calculation
     var things = {};
     var args = {};
-    var defaultArgs = ['', 0, '', 0, 0, ''];
-    var currentCps = calculateCps(...defaultArgs);
+    currentCps = calculateCps(...defaultArgs);
 
-    var hasLovelyCookies = Game.Has('Pure heart biscuits') && Game.Has('Ardent heart biscuits') && Game.Has('Sour heart biscuits') && Game.Has('Weeping heart biscuits') && Game.Has('Golden heart biscuits') && Game.Has('Eternal heart biscuits');
-    var hasSpookyCookies = Game.Has('Skull cookies') && Game.Has('Ghost cookies') && Game.Has('Bat cookies') && Game.Has('Slime cookies') && Game.Has('Pumpkin cookies') && Game.Has('Eyeball cookies') && Game.Has('Spider cookies');
+    var hasLovelyCookies = Game.Has(   'Pure heart biscuits') &&
+                           Game.Has( 'Ardent heart biscuits') &&
+                           Game.Has(   'Sour heart biscuits') &&
+                           Game.Has('Weeping heart biscuits') &&
+                           Game.Has( 'Golden heart biscuits') &&
+                           Game.Has('Eternal heart biscuits');
+    var hasSpookyCookies = Game.Has(  'Skull cookies') &&
+                           Game.Has(  'Ghost cookies') &&
+                           Game.Has(    'Bat cookies') &&
+                           Game.Has(  'Slime cookies') &&
+                           Game.Has('Pumpkin cookies') &&
+                           Game.Has('Eyeball cookies') &&
+                           Game.Has( 'Spider cookies');
     var eggs = 0;
     for (var i in Game.easterEggs) {
         if (Game.HasUnlocked(Game.easterEggs[i])) eggs++;
@@ -542,13 +580,57 @@ function doOrCalculateBestThing(){
     }
 
     for (var i in Game.Objects) {
-        var me = Game.Objects[i];
-        args[me.name] = [me.name, 1, '', 0, 0, ''];
-        things[me.name] = {type: 'building', name: me.name, cps: calculateCps(...args[me.name]), price: calculateBuildingPrice(me.name, ...defaultArgs)};
-        things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
-        things[me.name].value = things[me.name].percent / things[me.name].price;
+        var building = Game.Objects[i];
+        args[building.name] = [building.name, 1, '', 0, 0, ''];
+        things[building.name] = {
+            type: 'building',
+            name: building.name,
+            cps: calculateCps(...args[building.name]),
+            price: calculateBuildingPrice(building.name, ...defaultArgs),
+        };
+        things[building.name].percent = (things[building.name].cps / currentCps - 1) * 100;
+        things[building.name].value = things[building.name].percent / things[building.name].price;
 
-        // check tiered achievements
+        // Check tiered achievements
+        for (var j in building.tieredAchievs) {
+            if (Game.Tiers[j].achievUnlock > building.amount) {
+                if (!Game.HasAchiev(building.tieredAchievs[j].name)) {
+                    var buyCount = Game.Tiers[j].achievUnlock - building.amount;
+                    var thingKey = building.name + ' Tier';
+                    args[thingKey] = [building.name, buyCount, '', 1, 0, 0];
+                    things[thingKey] = createMultiBuildingThing(args[thingKey]);
+                }
+
+                break;
+            }
+        }
+
+        // Cursor doesn't use tiered achievements :(
+        if (building.name == 'Cursor') {
+            var cursorAchievements = [
+                {achievUnlock: 1,   name: 'Click'},
+                {achievUnlock: 2,   name: 'Double-click'},
+                {achievUnlock: 50,  name: 'Mouse wheel'},
+                {achievUnlock: 100, name: 'Of Mice and Men'},
+                {achievUnlock: 200, name: 'The Digital'},
+                {achievUnlock: 300, name: 'Extreme polydactyly'},
+                {achievUnlock: 400, name: 'Dr. T'},
+                {achievUnlock: 500, name: 'Thumbs, phalanges, metacarpals'},
+                {achievUnlock: 600, name: 'With her finger and her thumb'},
+            ];
+
+            for (var j in cursorAchievements) {
+                if (cursorAchievements[j].achievUnlock > building.amount) {
+                    if (!Game.HasAchiev(cursorAchievements[j].name)) {
+                        var buyCount = cursorAchievements[j].achievUnlock - building.amount;
+                        args['Cursor Tier'] = [building.name, buyCount, '', 1, 0, 0];
+                        things['Cursor Tier'] = createMultiBuildingThing(args['Cursor Tier']);
+                    }
+
+                    break;
+                }
+            }
+        }
     }
 
     console.log(things);
@@ -582,8 +664,9 @@ function doOrCalculateBestThing(){
             for (var i in things) {
                 var thing = things[i];
                 if (thing.name != best.name && thing.price < best.price && !thing.ignore) {
-                    var timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, ...args[thing.name])/thing.cps;
-                    var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, ...args[best.name])/best.cps;
+                    // These are slightly inaccurate for bulk building purchases, it might be a problem
+                    var timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, args[thing.name])/thing.cps;
+                    var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, args[best.name])/best.cps;
                     if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) betterThings.push(thing.name);
                 }
             }
@@ -615,9 +698,13 @@ function doOrCalculateBestThing(){
                 Game.santaLevel == 13 && !Game.HasAchiev('All hail Santa')
             ) args.santa[3] = 1;
 
-            things.santa = {type: 'upgrade', name: 'santa', cps: calculateCps(...args.santa)};
+            things.santa = {
+                type: 'upgrade',
+                name: 'santa',
+                cps: calculateCps(...args.santa),
+                price: santaPrice,
+            };
             things.santa.percent = (things.santa.cps / currentCps - 1) * 100;
-            things.santa.price = santaPrice;
             things.santa.value = things.santa.percent / things.santa.price;
 
             // Override best purchase if Santa is cheaper or faster
@@ -625,8 +712,8 @@ function doOrCalculateBestThing(){
                 best = things.santa;
                 clog(best);
             } else if (things.santa.value > best.value) {
-                var timeTillBothThingsIfFirst = things.santa.price/currentCps + calculatePrice(best.type, best.name, ...args.santa)/things.santa.cps;
-                var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'santa', ...args[best.name])/best.cps;
+                var timeTillBothThingsIfFirst = things.santa.price/currentCps + calculatePrice(best.type, best.name, args.santa)/things.santa.cps;
+                var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'santa', args[best.name])/best.cps;
                 if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
                     best = things.santa;
                     clog(best, 'better');
@@ -671,7 +758,7 @@ function doOrCalculateBestThing(){
             // Override upgrade purchases if dragon is better
             } else if (Game.dragonLevel > 21) {
                 args.dragon = ['', 0, '', 0, 0, ''];
-                if (Game.dragonLevel == 22) args.dragon[2] = 'Dragon cookie';
+                if      (Game.dragonLevel == 22) args.dragon[2] = 'Dragon cookie';
                 else if (Game.dragonLevel == 23) args.dragon[5] = 'Radiant Appetite';
 
                 things.dragon.cps = calculateCps(...args.dragon);
@@ -682,8 +769,8 @@ function doOrCalculateBestThing(){
                     best = things.dragon;
                     clog(best, 'best');
                 } else if (things.dragon.value > best.value || things.dragon.price < best.price) {
-                    var timeTillBothThingsIfFirst = things.dragon.price/currentCps + calculatePrice(best.type, best.name, ...args.dragon)/things.dragon.cps;
-                    var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'dragon', ...args[best.name])/best.cps;
+                    var timeTillBothThingsIfFirst = things.dragon.price/currentCps + calculatePrice(best.type, best.name, args.dragon)/things.dragon.cps;
+                    var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'dragon', args[best.name])/best.cps;
                     if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
                         best = things.dragon;
                         clog(best, 'better');
@@ -753,6 +840,9 @@ function doOrCalculateBestThing(){
             return;
         }
     }
+
+    // Set price for first building of multi building purchase
+    if (best.basePrice) best.price = best.basePrice;
 
     // Do nothing and make it really expensive, to stop spamming recalculate and focus on clicking
     // This should only happen during Cursed finger buff
@@ -839,6 +929,8 @@ var clickCountStart;
 var clickCountStarted;
 var clicksPerSecond = 150;
 var clickCount = 0;
+var defaultArgs = ['', 0, '', 0, 0, ''];
+var currentCps;
 
 function initialize() {
     Game.Win('Cheated cookies taste awful');
