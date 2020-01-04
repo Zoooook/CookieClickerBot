@@ -1,4 +1,3 @@
-// investigate how we're getting negative percentages
 // figure out if game is running slower than 30fps
 // take into account all achievements, upgrade unlocks
 // double buildings + 5
@@ -526,7 +525,7 @@ function doOrCalculateBestThing(){
 
     var bufferLine = 0;
     // Pop phase 2 wrinklers for drops
-    if (['easter', 'halloween'].includes(Game.season) || !Game.HasAchiev('Moistburster')) {
+    if (['easter', 'halloween'].includes(Game.season)) {
         for (var i in Game.wrinklers) {
             var me = Game.wrinklers[i];
             if (me.phase == 2 && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
@@ -590,9 +589,7 @@ function doOrCalculateBestThing(){
     for (var i in Game.UpgradesInStore) {
         var me = Game.UpgradesInStore[i];
 
-        if ((
-            me.name == 'Chocolate egg' || (me.name == 'Communal brainsweep' && Game.HasAchiev('Elder slumber') && Game.HasAchiev('Elder calm') && Game.HasAchiev('Moistburster'))
-        ) && !me.isVaulted()) me.vault();
+        if (me.name == 'Chocolate egg' && !me.isVaulted()) me.vault();
 
         // Activate optimal season
         else if (
@@ -608,7 +605,10 @@ function doOrCalculateBestThing(){
             return;
         }
 
-        else if (me.pool != 'toggle' && !me.isVaulted()) {
+        else if (
+            me.pool != 'toggle' && !me.isVaulted() &&
+            (!me.name == 'Communal brainsweep' || !Game.HasAchiev('Elder slumber') || !Game.HasAchiev('Elder calm') || !Game.HasAchiev('Last Chance to See'))
+        ) {
             var upgradePrice = calculateUpgradePrice(me.name, ...defaultArgs);
 
             // Buy cheap upgrades, don't waste time calculating
