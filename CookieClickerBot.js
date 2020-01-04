@@ -1,4 +1,4 @@
-// log click cps multiple of base cps
+// figure out if game is running slower than 30fps
 // take into account all achievements, upgrade unlocks
 // double buildings + 5
 
@@ -374,9 +374,45 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
         if (typeof Game.buffs[i].multCpS != 'undefined') mult *= Game.buffs[i].multCpS;
     }
 
-    cookiesPs *= mult;
+    return cookiesPs * mult;
+}
 
-    return cookiesPs + calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade);
+function calculateTotalCps(isDefault, args) {
+    var baseCps = calculateCps(...args);
+    var clickCps = calculateClickCps(baseCps, ...args);
+    var totalCps = baseCps + clickCps;
+
+    if (isDefault && trueClicksPerSecond) console.log('Autoclicker is generating ' + (100*clickCps/totalCps).toFixed(1) + '% of cookie production');
+
+    return totalCps;
+}
+
+function formatSeconds(rawSeconds) {
+    var temp = Math.floor(rawSeconds);
+    var seconds = temp%60;
+    var timeString = seconds.toString();
+
+    temp = Math.floor(temp/60);
+    if (temp) {
+        if (seconds < 10) timeString = '0' + timeString;
+        var minutes = temp%60;
+        timeString = minutes + ':' + timeString;
+
+        temp = Math.floor(temp/60);
+        if (temp) {
+            if (minutes < 10) timeString = '0' + timeString;
+            var hours = temp%24;
+            timeString = hours + ':' + timeString;
+
+            var days = Math.floor(temp/24);
+            if (days) {
+                if (hours < 10) timeString = '0' + timeString;
+                timeString = days + ':' + timeString;
+            }
+        }
+    }
+
+    return timeString;
 }
 
 function clog(thing, message) {
@@ -387,6 +423,7 @@ function clog(thing, message) {
     if (thing.percent) message += ', +' + thing.percent + '%';
     if (thing.price) message += ', $' + thing.price;
     if (thing.value) message += ', value: ' + thing.value;
+    if (trueClicksPerSecond && thing.price && Game.cookies < thing.price) message += ', T-' + formatSeconds((thing.price - Game.cookies) / currentCps);
     console.log(message);
 }
 
@@ -459,7 +496,7 @@ function createMultiBuildingThing(args) {
         type: 'building',
         name: args[0],
         buyCount: args[1],
-        cps: calculateCps(...args),
+        cps: calculateTotalCps(0, args),
         basePrice: calculateBuildingPrice(args[0], ...defaultArgs),
     };
     thing.percent = (thing.cps / currentCps - 1) * 100;
@@ -470,8 +507,6 @@ function createMultiBuildingThing(args) {
 }
 
 function doOrCalculateBestThing(){
-    console.log('\n');
-
     // Harvest any ripe sugar lumps
     if (Date.now() - Game.lumpT >= Game.lumpRipeAge) {
         clog({type: 'sugar', name: 'lump'});
@@ -515,7 +550,8 @@ function doOrCalculateBestThing(){
     // Start best purchase calculation
     var things = {};
     var args = {};
-    currentCps = calculateCps(...defaultArgs);
+    currentCps = calculateTotalCps(1, defaultArgs);
+    console.log('\n');
 
     var hasLovelyCookies = Game.Has(   'Pure heart biscuits') &&
                            Game.Has( 'Ardent heart biscuits') &&
@@ -565,7 +601,7 @@ function doOrCalculateBestThing(){
                 me.buy(1);
             } else {
                 args[me.name] = ['', 0, me.name, 0, 0, ''];
-                things[me.name] = {type: 'upgrade', name: me.name, cps: calculateCps(...args[me.name]), price: upgradePrice};
+                things[me.name] = {type: 'upgrade', name: me.name, cps: calculateTotalCps(0, args[me.name]), price: upgradePrice};
                 things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
                 things[me.name].value = things[me.name].percent / things[me.name].price;
             }
@@ -585,7 +621,7 @@ function doOrCalculateBestThing(){
         things[building.name] = {
             type: 'building',
             name: building.name,
-            cps: calculateCps(...args[building.name]),
+            cps: calculateTotalCps(0, args[building.name]),
             price: calculateBuildingPrice(building.name, ...defaultArgs),
         };
         things[building.name].percent = (things[building.name].cps / currentCps - 1) * 100;
@@ -701,7 +737,7 @@ function doOrCalculateBestThing(){
             things.santa = {
                 type: 'upgrade',
                 name: 'santa',
-                cps: calculateCps(...args.santa),
+                cps: calculateTotalCps(0, args.santa),
                 price: santaPrice,
             };
             things.santa.percent = (things.santa.cps / currentCps - 1) * 100;
@@ -761,7 +797,7 @@ function doOrCalculateBestThing(){
                 if      (Game.dragonLevel == 22) args.dragon[2] = 'Dragon cookie';
                 else if (Game.dragonLevel == 23) args.dragon[5] = 'Radiant Appetite';
 
-                things.dragon.cps = calculateCps(...args.dragon);
+                things.dragon.cps = calculateTotalCps(0, args.dragon);
                 things.dragon.percent = (things.dragon.cps / currentCps - 1) * 100;
                 things.dragon.value = things.dragon.percent / things.dragon.price;
 
@@ -850,8 +886,6 @@ function doOrCalculateBestThing(){
         best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned+Game.cookiesReset)*1000000000};
         clog(best);
     }
-
-    // Alternatively I should really ignore buffs when calculating cps
 }
 
 function formatTime(date) {
@@ -901,6 +935,7 @@ function playTheGame() {
 
         if (clickCountStarted) {
             clicksPerSecond = clickCount*1000/(now-clickCountStart);
+            trueClicksPerSecond = 1;
             console.log('\n' + clicksPerSecond + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
 
             if (!now.getMinutes() && !nowSeconds) {
@@ -928,6 +963,7 @@ var clickCountFlag;
 var clickCountStart;
 var clickCountStarted;
 var clicksPerSecond = 150;
+var trueClicksPerSecond;
 var clickCount = 0;
 var defaultArgs = ['', 0, '', 0, 0, ''];
 var currentCps;
@@ -951,6 +987,7 @@ function start() {
     best = {};
     clickCountStarted = 0;
     clickCountFlag = 1;
+    trueClicksPerSecond = 0;
 
     stop();
     botInterval = setInterval(playTheGame);
