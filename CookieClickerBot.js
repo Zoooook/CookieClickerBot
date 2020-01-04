@@ -758,7 +758,11 @@ function doOrCalculateBestThing(){
     // Alternatively I should really ignore buffs when calculating cps
 }
 
-function playTheGame(){
+function formatTime(date) {
+    return (date.getHours()-1)%12+1 + ':' + ('0' + date.getMinutes()).slice(-2) + ':' + ('0' + date.getSeconds()).slice(-2);
+}
+
+function playTheGame() {
     if (best.name && buyThings && Game.cookies > best.price) {
         if (best.type == 'building'){
             if (best.price < Game.cookies/1000000) Game.Objects[best.name].buy(50);
@@ -795,25 +799,26 @@ function playTheGame(){
     }
 
     var now = new Date();
-    var clickCountSeconds = now.getSeconds() % 15;
-    if (clickCountFlag && !clickCountSeconds) {
+    var nowSeconds = now.getSeconds();
+    if (clickCountFlag && !(nowSeconds%15)) {
         best = {};
 
         if (clickCountStarted) {
-            if (!now.getMinutes()) {
-                clickCountStart = new Date();
+            clicksPerSecond = clickCount*1000/(now-clickCountStart);
+            console.log('\n' + clicksPerSecond + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
+
+            if (!now.getMinutes() && !nowSeconds) {
+                clickCountStart = now;
                 clickCount = 0;
-            } else {
-                clicksPerSecond = clickCount*1000/(now-clickCountStart);
-                console.log(clicksPerSecond + ' clicks per second');
             }
         } else {
             clickCountStarted = 1;
-            clickCountStart = new Date();
+            clickCountStart = now;
             clickCount = 0;
         }
+
         clickCountFlag = 0;
-    } else if (!clickCountFlag && clickCountSeconds) clickCountFlag = 1;
+    } else if (!clickCountFlag && nowSeconds%15) clickCountFlag = 1;
     ++clickCount;
 
     Game.ClickCookie();
