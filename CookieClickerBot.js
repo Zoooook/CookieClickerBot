@@ -795,7 +795,7 @@ function playTheGame(){
     }
 
     var now = new Date();
-    var clickCountSeconds = now.getSeconds();
+    var clickCountSeconds = now.getSeconds() % 15;
     if (clickCountFlag && !clickCountSeconds) {
         best = {};
 
