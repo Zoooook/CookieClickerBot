@@ -1,3 +1,4 @@
+// investigate how we're getting negative percentages
 // figure out if game is running slower than 30fps
 // take into account all achievements, upgrade unlocks
 // double buildings + 5
@@ -378,14 +379,17 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
 }
 
 function calculateTotalCps(isDefault, args) {
+    if (isDefault && trueClicksPerSecond) {
+        now = new Date();
+        clicksPerSecond = clickCount*1000/(now-clickCountStart);
+        console.log(clicksPerSecond.toFixed(1) + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
+    }
+
     var baseCps = calculateCps(...args);
     var clickCps = calculateClickCps(baseCps, ...args);
     var totalCps = baseCps + clickCps;
 
     if (isDefault && trueClicksPerSecond) {
-        now = new Date();
-        clicksPerSecond = clickCount*1000/(now-clickCountStart);
-        console.log(clicksPerSecond.toFixed(1) + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
         console.log('Autoclicker is generating ' + (100*clickCps/totalCps).toFixed(1) + '% of cookie production');
         console.log('\n');
     }
