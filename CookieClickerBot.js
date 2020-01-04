@@ -382,7 +382,11 @@ function calculateTotalCps(isDefault, args) {
     var clickCps = calculateClickCps(baseCps, ...args);
     var totalCps = baseCps + clickCps;
 
-    if (isDefault && trueClicksPerSecond) console.log('Autoclicker is generating ' + (100*clickCps/totalCps).toFixed(1) + '% of cookie production');
+    if (isDefault && trueClicksPerSecond) {
+        console.log(clicksPerSecond.toFixed(1) + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
+        console.log('Autoclicker is generating ' + (100*clickCps/totalCps).toFixed(1) + '% of cookie production');
+        console.log('\n');
+    }
 
     return totalCps;
 }
@@ -420,9 +424,9 @@ function clog(thing, message) {
     else message = '';
     message += thing.type + ': ' + thing.name;
     if (thing.buyCount) message += ' x' + thing.buyCount;
-    if (thing.percent) message += ', +' + thing.percent + '%';
-    if (thing.price) message += ', $' + thing.price;
-    if (thing.value) message += ', value: ' + thing.value;
+    if (thing.percent) message += ', +' + thing.percent.toPrecision(4) + '%';
+    if (thing.price) message += ', $' + thing.price.toPrecision(4);
+    if (thing.value) message += ', value: ' + thing.value.toPrecision(4);
     if (trueClicksPerSecond && thing.price && Game.cookies < thing.price) message += ', T-' + formatSeconds((thing.price - Game.cookies) / currentCps);
     console.log(message);
 }
@@ -510,15 +514,18 @@ function doOrCalculateBestThing(){
     // Harvest any ripe sugar lumps
     if (Date.now() - Game.lumpT >= Game.lumpRipeAge) {
         clog({type: 'sugar', name: 'lump'});
+        console.log('\n');
         Game.clickLump();
     }
 
+    var bufferLine = 0;
     // Pop phase 2 wrinklers for drops
     if (['easter', 'halloween'].includes(Game.season) || !Game.HasAchiev('Moistburster')) {
         for (var i in Game.wrinklers) {
             var me = Game.wrinklers[i];
             if (me.phase == 2 && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
                 clog({type: 'wrinkler', name: i});
+                bufferLine = 1;
                 me.hp = -10;
             }
         }
@@ -529,20 +536,24 @@ function doOrCalculateBestThing(){
             var me = Game.wrinklers[i];
             if (me.phase && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
                 clog({type: 'wrinkler', name: i});
+                bufferLine = 1
                 me.hp = -10;
             }
         }
     }
+    if (bufferLine) console.log('\n');
 
     // Set aura (sacrifice a building) before any more buildings are built
     if (Game.Has('A crumbly egg')) {
         if (Game.dragonLevel >= 14 && !Game.hasAura('Dragonflight')) {
             best = {type: 'aura', name: 'Dragonflight', price: 0};
             clog(best);
+            console.log('\n');
             return;
         } else if (Game.dragonLevel == 24 && !Game.hasAura('Radiant Appetite')) {
             best = {type: 'aura', name: 'Radiant Appetite', price: 0};
             clog(best);
+            console.log('\n');
             return;
         }
     }
@@ -551,7 +562,6 @@ function doOrCalculateBestThing(){
     var things = {};
     var args = {};
     currentCps = calculateTotalCps(1, defaultArgs);
-    console.log('\n');
 
     var hasLovelyCookies = Game.Has(   'Pure heart biscuits') &&
                            Game.Has( 'Ardent heart biscuits') &&
@@ -873,7 +883,6 @@ function doOrCalculateBestThing(){
         if (totalSucked*toSuck >= cookieDiff && cookieDiff > currentCps * 60 * 60) {
             best = {type: 'wrinkler', name: bestWrinkler.toString(), price: 0};
             clog(best);
-            return;
         }
     }
 
@@ -886,6 +895,8 @@ function doOrCalculateBestThing(){
         best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned+Game.cookiesReset)*1000000000};
         clog(best);
     }
+
+    console.log('\n');
 }
 
 function formatTime(date) {
@@ -928,7 +939,7 @@ function playTheGame() {
         doOrCalculateBestThing();
     }
 
-    var now = new Date();
+    now = new Date();
     var nowSeconds = now.getSeconds();
     if (clickCountFlag && !(nowSeconds%15)) {
         best = {};
@@ -936,7 +947,6 @@ function playTheGame() {
         if (clickCountStarted) {
             clicksPerSecond = clickCount*1000/(now-clickCountStart);
             trueClicksPerSecond = 1;
-            console.log('\n' + clicksPerSecond + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
 
             if (!now.getMinutes() && !nowSeconds) {
                 clickCountStart = now;
@@ -959,6 +969,7 @@ var botInterval;
 var best;
 var buyThings = 1;
 var restoreHeight;
+var now;
 var clickCountFlag;
 var clickCountStart;
 var clickCountStarted;
