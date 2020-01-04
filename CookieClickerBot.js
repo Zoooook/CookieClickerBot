@@ -389,7 +389,7 @@ function calculateTotalCps(isDefault, args) {
     var totalCps = baseCps + clickCps;
 
     if (isDefault && trueClicksPerSecond) {
-        console.log('Autoclicker is generating ' + (100*clickCps/totalCps).toFixed(1) + '% of cookie production');
+        console.log((100*clickCps/totalCps).toFixed(1) + '% of cookie production is due to autoclicker');
         console.log('\n');
     }
 
