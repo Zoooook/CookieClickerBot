@@ -2,8 +2,8 @@
 // take into account all achievements, upgrade unlocks
 // double buildings + 5
 
-// slow wrinkler popping based on buying upgrades, speed up for shiny wrinkler
 // ascension -- maybe need to take into account longterm expected production, ignore buffs
+// save scum sugar lump harvesting
 // math for auras and grandmas
 // minigames, level objects
 
@@ -437,12 +437,32 @@ function calculatePrice(type, name, testBuy, testBuyCount, testUpgrade, testAchi
     if (type == 'upgrade') return calculateUpgradePrice(name, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura);
 }
 
-function calculateBestThing(){
-    // Top priority is harvesting sugar lumps
+function doOrCalculateBestThing(){
+    // Harvest any ripe sugar lumps
     if (Date.now() - Game.lumpT >= Game.lumpRipeAge) {
-        best = {type: 'sugar', name: 'lump', price: 0};
-        clog(best);
-        return;
+        clog({type: 'sugar', name: 'lump'});
+        Game.clickLump();
+    }
+
+    // Pop phase 2 wrinklers for drops
+    if (['easter', 'halloween'].includes(Game.season) || !Game.HasAchiev('Moistburster')) {
+        for (var i in Game.wrinklers) {
+            var me = Game.wrinklers[i];
+            if (me.phase == 2 && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
+                clog({type: 'wrinkler', name: i});
+                me.hp = -10;
+            }
+        }
+    }
+    // Pop wrinklers for achievements
+    else if (!Game.HasAchiev('Moistburster') || !Game.HasAchiev('Last Chance to See')) {
+        for (var i in Game.wrinklers) {
+            var me = Game.wrinklers[i];
+            if (me.phase && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
+                clog({type: 'wrinkler', name: i});
+                me.hp = -10;
+            }
+        }
     }
 
     // Set aura (sacrifice a building) before any more buildings are built
@@ -455,28 +475,6 @@ function calculateBestThing(){
             best = {type: 'aura', name: 'Radiant Appetite', price: 0};
             clog(best);
             return;
-        }
-    }
-
-    // Pop phase 2 wrinklers for drops
-    if (['easter', 'halloween'].includes(Game.season) || !Game.HasAchiev('Moistburster')) {
-        for (var i in Game.wrinklers) {
-            var me = Game.wrinklers[i];
-            if (me.phase == 2 && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
-                best = {type: 'wrinkler', name: i.toString(), price: 0};
-                clog(best);
-                return;
-            }
-        }
-    // Pop wrinklers for achievements
-    } else if (!Game.HasAchiev('Moistburster') || !Game.HasAchiev('Last Chance to See')) {
-        for (var i in Game.wrinklers) {
-            var me = Game.wrinklers[i];
-            if (me.phase && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
-                best = {type: 'wrinkler', name: i.toString(), price: 0};
-                clog(best);
-                return;
-            }
         }
     }
 
@@ -501,7 +499,7 @@ function calculateBestThing(){
         ) && !me.isVaulted()) me.vault();
 
         // Activate optimal season
-        if (
+        else if (
             me.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                           && Game.santaLevel  < 14 && Game.Has(  'Titanium mouse') ||
             me.name == 'Lovesick biscuit' && Game.season != 'valentines'                                   && !hasLovelyCookies && Game.santaLevel == 14 && Game.Has('Fantasteel mouse') ||
             me.name ==    'Bunny biscuit' && Game.season != 'easter'                         && eggs  < 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
@@ -514,15 +512,22 @@ function calculateBestThing(){
             return;
         }
 
-        if (me.pool != 'toggle' && !me.isVaulted()) {
-            args[me.name] = ['', 0, me.name, 0, 0, ''];
-            things[me.name] = {type: 'upgrade', name: me.name, cps: calculateCps(...args[me.name])};
-            things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
-            things[me.name].price = calculateUpgradePrice(me.name, ...defaultArgs);
-            things[me.name].value = things[me.name].percent / things[me.name].price;
+        else if (me.pool != 'toggle' && !me.isVaulted()) {
+            var upgradePrice = calculateUpgradePrice(me.name, ...defaultArgs);
+
+            // Buy cheap upgrades, don't waste time calculating
+            if (upgradePrice < Game.cookies/1000000) {
+                clog({type: 'upgrade', name: me.name, price: upgradePrice}, 'cheap');
+                me.buy(1);
+            } else {
+                args[me.name] = ['', 0, me.name, 0, 0, ''];
+                things[me.name] = {type: 'upgrade', name: me.name, cps: calculateCps(...args[me.name]), price: upgradePrice};
+                things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
+                things[me.name].value = things[me.name].percent / things[me.name].price;
+            }
         }
 
-        if (
+        else if (
             me.name == 'Elder Pledge'   && !Game.HasAchiev('Elder slumber') ||
             me.name == 'Elder Covenant' && Game.Upgrades['Elder Pledge'].unlocked==0 ||
             me.name == 'Revoke Elder Covenant'
@@ -533,10 +538,11 @@ function calculateBestThing(){
     for (var i in Game.Objects) {
         var me = Game.Objects[i];
         args[me.name] = [me.name, 1, '', 0, 0, ''];
-        things[me.name] = {type: 'building', name: me.name, cps: calculateCps(...args[me.name])};
+        things[me.name] = {type: 'building', name: me.name, cps: calculateCps(...args[me.name]), price: calculateBuildingPrice(me.name, ...defaultArgs)};
         things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
-        things[me.name].price = calculateBuildingPrice(me.name, ...defaultArgs);
         things[me.name].value = things[me.name].percent / things[me.name].price;
+
+        // check tiered achievements
     }
 
     console.log(things);
@@ -548,6 +554,7 @@ function calculateBestThing(){
         if (thing.value > best.value) best = thing;
     }
 
+    // Find better purchases for speed (sometimes by lowering prices)
     if (best.name) {
         clog(best, 'best');
 
@@ -565,7 +572,6 @@ function calculateBestThing(){
                 clog(best, 'better');
             }
 
-            // Find better purchases for speed (sometimes by lowering prices)
             betterThings = [];
             for (var i in things) {
                 var thing = things[i];
@@ -742,12 +748,14 @@ function calculateBestThing(){
         }
     }
 
-    // Do nothing and make it really expensive, to stop recalculating and focus on clicking
+    // Do nothing and make it really expensive, to stop spamming recalculate and focus on clicking
     // This should only happen during Cursed finger buff
     if (!best.name) {
         best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned+Game.cookiesReset)*1000000000};
         clog(best);
     }
+
+    // Alternatively I should really ignore buffs when calculating cps
 }
 
 function playTheGame(){
@@ -782,7 +790,8 @@ function playTheGame(){
             Game.LeftBackground.canvas.height = restoreHeight;
             restoreHeight = 0;
         }
-        calculateBestThing();
+
+        doOrCalculateBestThing();
     }
 
     var now = new Date();
