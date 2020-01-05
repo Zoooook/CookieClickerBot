@@ -53,7 +53,7 @@ function calculateCursorCps(testBuy, testBuyCount, testUpgrade) {
 
     let num = 0;
     for (let i in Game.Objects) {
-        if (Game.Objects[i].name != 'Cursor') num += amount(Game.Objects[i], testBuy);
+        if (Game.Objects[i].name != 'Cursor') num += amount(Game.Objects[i], testBuy, testBuyCount);
     }
     add = add * num;
 
