@@ -1,9 +1,9 @@
 // keep 2 overlapping click counts
-// figure out if game is running slower than 30fps
 // take into account all achievements, upgrade unlocks
-
 // ascension -- maybe need to take into account longterm expected production, ignore buffs
 // save scum sugar lump harvesting
+
+// figure out if game is running slower than 30fps
 // math for auras and grandmas
 // minigames, level objects
 
@@ -462,7 +462,7 @@ function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, 
     const upgrade = Game.Upgrades[upgradeName];
     let price = upgrade.basePrice;
 
-    if (upgrade.priceFunc) price = upgrade.priceFunc(this);
+    if (upgrade.priceFunc) price = upgrade.priceFunc(upgrade);
     if (price == 0) return 0;
 
     if (upgrade.pool != 'prestige') {
