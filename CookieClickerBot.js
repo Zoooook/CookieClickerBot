@@ -1,5 +1,5 @@
+// track down ETA bug
 // keep 2 overlapping click counts
-// click fortunes
 // take into account all achievements, upgrade unlocks
 // ascension -- maybe need to take into account longterm expected production, ignore buffs
 // save scum sugar lump harvesting
@@ -117,7 +117,7 @@ function calculateHeavenlyMultiplier(testUpgrade) {
     if (willHave('Lucky number', testUpgrade)) heavenlyMult *= 1.01;
     if (willHave('Lucky payout', testUpgrade)) heavenlyMult *= 1.01;
     if (Game.hasGod) {
-        const godLvl = Game.hasGod('creation');
+        const    godLvl = Game.hasGod('creation');
         if      (godLvl == 1) heavenlyMult *= 0.7;
         else if (godLvl == 2) heavenlyMult *= 0.8;
         else if (godLvl == 3) heavenlyMult *= 0.9;
@@ -134,7 +134,9 @@ function auraMultRadiantAppetite(testAura) {
     return 0;
 }
 
-function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
+function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade) {
+    if (Game.hasBuff('Cursed finger')) return Game.buffs['Cursed finger'].power;
+
     let add = 0;
     if (willHave(   'Thousand fingers', testUpgrade)) add += 0.1;
     if (willHave(    'Million fingers', testUpgrade)) add += 0.5;
@@ -173,7 +175,7 @@ function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
     mult *= Game.eff('click');
 
     if (Game.hasGod) {
-        const godLvl = Game.hasGod('labor');
+        const    godLvl = Game.hasGod('labor');
         if      (godLvl == 1) mult *= 1.15;
         else if (godLvl == 2) mult *= 1.1;
         else if (godLvl == 3) mult *= 1.05;
@@ -185,16 +187,17 @@ function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
 
     mult *= 1 + Game.auraMult('Dragon Cursor') * 0.05;
 
-    let out = mult * Game.ComputeCps(
+    return mult * Game.ComputeCps(
         1,
         willHave('Reinforced index finger', testUpgrade) +
         willHave('Carpal tunnel prevention cream', testUpgrade) +
         willHave('Ambidextrous', testUpgrade),
         add
     );
+}
 
-    if (Game.hasBuff('Cursed finger')) out = Game.buffs['Cursed finger'].power;
-    return out * clicksPerSecond;
+function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
+    return clicksPerSecond * calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade);
 }
 
 function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
@@ -238,7 +241,7 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
 
     let buildMult = 1;
     if (Game.hasGod) {
-        let godLvl = Game.hasGod('asceticism');
+        let      godLvl = Game.hasGod('asceticism');
         if      (godLvl == 1) mult *= 1.15;
         else if (godLvl == 2) mult *= 1.1;
         else if (godLvl == 3) mult *= 1.05;
@@ -281,7 +284,7 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
     if (willHave('Santa\'s milk and cookies', testUpgrade)) milkMult *= 1.05;
     milkMult *= 1 + Game.auraMult('Breath of Milk') * 0.05;
     if (Game.hasGod) {
-        const godLvl = Game.hasGod('mother');
+        const    godLvl = Game.hasGod('mother');
         if      (godLvl == 1) milkMult *= 1.1;
         else if (godLvl == 2) milkMult *= 1.05;
         else if (godLvl == 3) milkMult *= 1.03;
@@ -451,7 +454,7 @@ function calculateBuildingPrice(buildingName, testBuy, testBuyCount, testUpgrade
     price *= Game.eff('buildingCost');
 
     if (Game.hasGod) {
-        const godLvl = Game.hasGod('creation');
+        const    godLvl = Game.hasGod('creation');
         if      (godLvl == 1) price *= 0.93;
         else if (godLvl == 2) price *= 0.95;
         else if (godLvl == 3) price *= 0.98;
@@ -870,7 +873,7 @@ function doOrCalculateBestThing(){
         if (Game.Has('Sacrilegious corruption')) toSuck *= 1.05;
         if (Game.Has('Wrinklerspawn')) toSuck *= 1.05;
         if (Game.hasGod) {
-            const godLvl = Game.hasGod('scorn');
+            const    godLvl = Game.hasGod('scorn');
             if      (godLvl == 1) toSuck *= 1.15;
             else if (godLvl == 2) toSuck *= 1.1;
             else if (godLvl == 3) toSuck *= 1.05;
@@ -940,7 +943,11 @@ function playTheGame() {
         } else if (best.type == 'wrinkler') Game.wrinklers[Number(best.name)].hp = -10;
 
         best = {};
-    } else if(Game.shimmers.length && (Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) Game.shimmers[0].pop();
+    } else if(Game.shimmers.length && (Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) {
+        console.log('shimmer: ' + Game.shimmers[0].type);
+        console.log('\n');
+        Game.shimmers[0].pop();
+    }
     else if (!best.name) {
         if (restoreHeight && Game.HasAchiev('Cookie-dunker')) {
             Game.LeftBackground.canvas.height = restoreHeight;
