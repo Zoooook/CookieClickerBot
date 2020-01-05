@@ -1,4 +1,5 @@
 // keep 2 overlapping click counts
+// click fortunes
 // take into account all achievements, upgrade unlocks
 // ascension -- maybe need to take into account longterm expected production, ignore buffs
 // save scum sugar lump harvesting
@@ -512,6 +513,9 @@ function createMultiBuildingThing(args) {
 }
 
 function doOrCalculateBestThing(){
+    // Click fortunes
+    if (Game.TickerEffect.type=='fortune') Game.tickerL.click();
+
     // Harvest any ripe sugar lumps
     if (Date.now() - Game.lumpT >= Game.lumpRipeAge) {
         clog({type: 'sugar', name: 'lump'});
@@ -565,18 +569,18 @@ function doOrCalculateBestThing(){
     currentCps = calculateTotalCps(1, defaultArgs);
 
     const hasLovelyCookies = Game.Has(   'Pure heart biscuits') &&
-                           Game.Has( 'Ardent heart biscuits') &&
-                           Game.Has(   'Sour heart biscuits') &&
-                           Game.Has('Weeping heart biscuits') &&
-                           Game.Has( 'Golden heart biscuits') &&
-                           Game.Has('Eternal heart biscuits');
+                             Game.Has( 'Ardent heart biscuits') &&
+                             Game.Has(   'Sour heart biscuits') &&
+                             Game.Has('Weeping heart biscuits') &&
+                             Game.Has( 'Golden heart biscuits') &&
+                             Game.Has('Eternal heart biscuits');
     const hasSpookyCookies = Game.Has(  'Skull cookies') &&
-                           Game.Has(  'Ghost cookies') &&
-                           Game.Has(    'Bat cookies') &&
-                           Game.Has(  'Slime cookies') &&
-                           Game.Has('Pumpkin cookies') &&
-                           Game.Has('Eyeball cookies') &&
-                           Game.Has( 'Spider cookies');
+                             Game.Has(  'Ghost cookies') &&
+                             Game.Has(    'Bat cookies') &&
+                             Game.Has(  'Slime cookies') &&
+                             Game.Has('Pumpkin cookies') &&
+                             Game.Has('Eyeball cookies') &&
+                             Game.Has( 'Spider cookies');
     let eggs = 0;
     for (let i in Game.easterEggs) {
         if (Game.HasUnlocked(Game.easterEggs[i])) eggs++;
@@ -945,7 +949,7 @@ function playTheGame() {
 
     now = new Date();
     const nowSeconds = now.getSeconds();
-    if (clickCountFlag && !(nowSeconds%15)) {
+    if (clickCountFlag && !(nowSeconds%10)) {
         best = {};
 
         if (clickCountStarted) {
@@ -963,7 +967,7 @@ function playTheGame() {
         }
 
         clickCountFlag = 0;
-    } else if (!clickCountFlag && nowSeconds%15) clickCountFlag = 1;
+    } else if (!clickCountFlag && nowSeconds%10) clickCountFlag = 1;
     ++clickCount;
 
     Game.ClickCookie();
@@ -1022,3 +1026,11 @@ function stop() {
 
 initialize();
 start();
+
+function calculateTotalBuildingCost() {
+    let cost = 0;
+    for (let i in Game.Objects) {
+        cost += calculateBuildingPrice(Game.Objects[i].name, ...defaultArgs)*20/3;
+    }
+    return cost;
+}
