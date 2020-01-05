@@ -602,6 +602,7 @@ function doOrCalculateBestThing(){
             best = {type: 'upgrade', name: upgrade.name, percent: 0, value: 0};
             best.price = calculateUpgradePrice(upgrade.name, ...defaultArgs);
             clog(best, 'season');
+            console.log('\n');
             return;
         }
 
@@ -613,8 +614,10 @@ function doOrCalculateBestThing(){
 
             // Buy cheap upgrades, don't waste time calculating
             if (upgradePrice < Game.cookies/1000000) {
-                clog({type: 'upgrade', name: upgrade.name, price: upgradePrice}, 'cheap');
-                upgrade.buy(1);
+                best = {type: 'upgrade', name: upgrade.name, price: upgradePrice}
+                clog(best, 'cheap');
+                console.log('\n');
+                return;
             } else {
                 args[upgrade.name] = ['', 0, upgrade.name, 0, 0, ''];
                 things[upgrade.name] = {type: 'upgrade', name: upgrade.name, cps: calculateTotalCps(0, args[upgrade.name]), price: upgradePrice};
