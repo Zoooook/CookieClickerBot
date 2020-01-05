@@ -1,6 +1,6 @@
+// keep 2 overlapping click counts
 // figure out if game is running slower than 30fps
 // take into account all achievements, upgrade unlocks
-// double buildings + 5
 
 // ascension -- maybe need to take into account longterm expected production, ignore buffs
 // save scum sugar lump harvesting
@@ -23,15 +23,15 @@ function amount(building, testBuy, testBuyCount) {
 }
 
 function calculateTieredCpsMult(me, testBuy, testBuyCount, testUpgrade) {
-    var mult = 1;
-    for (var i in me.tieredUpgrades) {
+    let mult = 1;
+    for (let i in me.tieredUpgrades) {
         if (!Game.Tiers[me.tieredUpgrades[i].tier].special && willHave(me.tieredUpgrades[i].name, testUpgrade)) mult *= 2;
     }
-    for (var i in me.synergies) {
-        var syn = me.synergies[i];
+    for (let i in me.synergies) {
+        const syn = me.synergies[i];
         if (willHave(syn.name, testUpgrade)){
-            if      (syn.buildingTie1.name == me.name) mult *= (1+0.05 *amount(syn.buildingTie2, testBuy, testBuyCount));
-            else if (syn.buildingTie2.name == me.name) mult *= (1+0.001*amount(syn.buildingTie1, testBuy, testBuyCount));
+            if      (syn.buildingTie1.name == me.name) mult *= (1 + 0.05  * amount(syn.buildingTie2, testBuy, testBuyCount));
+            else if (syn.buildingTie2.name == me.name) mult *= (1 + 0.001 * amount(syn.buildingTie1, testBuy, testBuyCount));
         }
     }
     if (me.fortune && willHave(me.fortune.name, testUpgrade)) mult *= 1.07;
@@ -40,7 +40,7 @@ function calculateTieredCpsMult(me, testBuy, testBuyCount, testUpgrade) {
 }
 
 function calculateCursorCps(testBuy, testBuyCount, testUpgrade) {
-    var add = 0;
+    let add = 0;
     if (willHave(   'Thousand fingers', testUpgrade)) add += 0.1;
     if (willHave(    'Million fingers', testUpgrade)) add += 0.5;
     if (willHave(    'Billion fingers', testUpgrade)) add += 5;
@@ -51,13 +51,13 @@ function calculateCursorCps(testBuy, testBuyCount, testUpgrade) {
     if (willHave( 'Septillion fingers', testUpgrade)) add += 500000;
     if (willHave(  'Octillion fingers', testUpgrade)) add += 5000000;
 
-    var num=0;
-    for (var i in Game.Objects) {
+    let num = 0;
+    for (let i in Game.Objects) {
         if (Game.Objects[i].name != 'Cursor') num += amount(Game.Objects[i], testBuy);
     }
     add = add * num;
 
-    var mult = 1;
+    let mult = 1;
     mult *= calculateTieredCpsMult(Game.Objects['Cursor'], testBuy, testBuyCount, testUpgrade);
     mult *= Game.eff('cursorCps');
     return Game.ComputeCps(
@@ -68,8 +68,8 @@ function calculateCursorCps(testBuy, testBuyCount, testUpgrade) {
 }
 
 function calculateGrandmaCps(testBuy, testBuyCount, testUpgrade) {
-    var mult = 1;
-    for (var i in Game.GrandmaSynergies) {
+    let mult = 1;
+    for (let i in Game.GrandmaSynergies) {
         if (willHave(Game.GrandmaSynergies[i], testUpgrade)) mult *= 2;
     }
     if (willHave('Bingo center/Research facility', testUpgrade)) mult *= 4;
@@ -80,13 +80,13 @@ function calculateGrandmaCps(testBuy, testBuyCount, testUpgrade) {
     mult *= Game.eff('grandmaCps');
     mult *= calculateTieredCpsMult(Game.Objects['Grandma'], testBuy, testBuyCount, testUpgrade);
 
-    var add = 0;
+    let add = 0;
     if (willHave('One mind',            testUpgrade)) add += amount(Game.Objects['Grandma'], testBuy, testBuyCount) * 0.02;
     if (willHave('Communal brainsweep', testUpgrade)) add += amount(Game.Objects['Grandma'], testBuy, testBuyCount) * 0.02;
     if (willHave('Elder Pact',          testUpgrade)) add += amount(Game.Objects['Portal'],  testBuy, testBuyCount) * 0.05;
 
-    var num = 0;
-    for (var i in Game.Objects) {
+    let num = 0;
+    for (let i in Game.Objects) {
         if (Game.Objects[i].name!='Grandma') num += amount(Game.Objects[i], testBuy, testBuyCount);
     }
 
@@ -99,13 +99,13 @@ function calculateBuildingCps(buildingName, testBuy, testBuyCount, testUpgrade) 
     if (buildingName == 'Cursor')  return calculateCursorCps( testBuy, testBuyCount, testUpgrade);
     if (buildingName == 'Grandma') return calculateGrandmaCps(testBuy, testBuyCount, testUpgrade);
 
-    var mult = 1;
+    let mult = 1;
     mult *= calculateTieredCpsMult(Game.Objects[buildingName], testBuy, testBuyCount, testUpgrade);
     return Game.Objects[buildingName].baseCps * mult;
 }
 
 function calculateHeavenlyMultiplier(testUpgrade) {
-    var heavenlyMult = 0;
+    let heavenlyMult = 0;
     if (willHave('Heavenly chip secret',   testUpgrade)) heavenlyMult += 0.05;
     if (willHave('Heavenly cookie stand',  testUpgrade)) heavenlyMult += 0.20;
     if (willHave('Heavenly bakery',        testUpgrade)) heavenlyMult += 0.25;
@@ -116,7 +116,7 @@ function calculateHeavenlyMultiplier(testUpgrade) {
     if (willHave('Lucky number', testUpgrade)) heavenlyMult *= 1.01;
     if (willHave('Lucky payout', testUpgrade)) heavenlyMult *= 1.01;
     if (Game.hasGod) {
-        var godLvl = Game.hasGod('creation');
+        const godLvl = Game.hasGod('creation');
         if      (godLvl == 1) heavenlyMult *= 0.7;
         else if (godLvl == 2) heavenlyMult *= 0.8;
         else if (godLvl == 3) heavenlyMult *= 0.9;
@@ -134,7 +134,7 @@ function auraMultRadiantAppetite(testAura) {
 }
 
 function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
-    var add = 0;
+    let add = 0;
     if (willHave(   'Thousand fingers', testUpgrade)) add += 0.1;
     if (willHave(    'Million fingers', testUpgrade)) add += 0.5;
     if (willHave(    'Billion fingers', testUpgrade)) add += 5;
@@ -144,8 +144,8 @@ function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
     if (willHave( 'Sextillion fingers', testUpgrade)) add += 50000;
     if (willHave( 'Septillion fingers', testUpgrade)) add += 500000;
     if (willHave(  'Octillion fingers', testUpgrade)) add += 5000000;
-    var num = 0;
-    for (var i in Game.Objects) {
+    let num = 0;
+    for (let i in Game.Objects) {
         num += amount(Game.Objects[i], testBuy, testBuyCount);
     }
     num -= amount(Game.Objects['Cursor'], testBuy, testBuyCount);
@@ -165,26 +165,26 @@ function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
     if (willHave(   'Plasmarble mouse', testUpgrade)) add += cookiesPs*0.01;
     if (willHave('Fortune #104',        testUpgrade)) add += cookiesPs*0.01;
 
-    var mult = 1;
+    let mult = 1;
     if (willHave('Santa\'s helpers', testUpgrade)) mult *= 1.1;
     if (willHave('Cookie egg',       testUpgrade)) mult *= 1.1;
     if (willHave('Halo gloves',      testUpgrade)) mult *= 1.1;
     mult *= Game.eff('click');
 
     if (Game.hasGod) {
-        var godLvl = Game.hasGod('labor');
+        const godLvl = Game.hasGod('labor');
         if      (godLvl == 1) mult *= 1.15;
         else if (godLvl == 2) mult *= 1.1;
         else if (godLvl == 3) mult *= 1.05;
     }
 
-    for (var i in Game.buffs) {
+    for (let i in Game.buffs) {
         if (typeof Game.buffs[i].multClick != 'undefined') mult *= Game.buffs[i].multClick;
     }
 
     mult *= 1 + Game.auraMult('Dragon Cursor') * 0.05;
 
-    var out = mult * Game.ComputeCps(
+    let out = mult * Game.ComputeCps(
         1,
         willHave('Reinforced index finger', testUpgrade) +
         willHave('Carpal tunnel prevention cream', testUpgrade) +
@@ -197,14 +197,14 @@ function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
 }
 
 function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
-    var cookiesPs = 0;
-    var mult = 1;
+    let cookiesPs = 0;
+    let mult = 1;
     //add up effect bonuses from building minigames
-    var effs = {};
-    for (var i in Game.Objects) {
+    let effs = {};
+    for (let i in Game.Objects) {
         if (Game.Objects[i].minigameLoaded && Game.Objects[i].minigame.effs) {
-            var myEffs = Game.Objects[i].minigame.effs;
-            for (var ii in myEffs){
+            const myEffs = Game.Objects[i].minigame.effs;
+            for (let ii in myEffs){
                 if (effs[ii]) effs[ii] *= myEffs[ii];
                 else effs[ii] = myEffs[ii];
             }
@@ -217,9 +217,9 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
 
     if (willHave('Heralds', testUpgrade) && Game.ascensionMode != 1) mult *= 1 + 0.01 * Game.heralds;
 
-    for (var i in Game.cookieUpgrades) {
-        var me = Game.cookieUpgrades[i];
-        if (willHave(me.name, testUpgrade)) mult *= (1 + (typeof(me.power) == 'function' ? me.power(me) : me.power) * 0.01);
+    for (let i in Game.cookieUpgrades) {
+        const upgrade = Game.cookieUpgrades[i];
+        if (willHave(upgrade.name, testUpgrade)) mult *= (1 + (typeof(upgrade.power) == 'function' ? upgrade.power(upgrade) : upgrade.power) * 0.01);
     }
 
     if (willHave('Specialized chocolate chips', testUpgrade)) mult *= 1.01;
@@ -235,29 +235,29 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
     if (willHave('Fortune #100',                testUpgrade)) mult *= 1.01;
     if (willHave('Fortune #101',                testUpgrade)) mult *= 1.07;
 
-    var buildMult = 1;
+    let buildMult = 1;
     if (Game.hasGod) {
-        var godLvl = Game.hasGod('asceticism');
+        let godLvl = Game.hasGod('asceticism');
         if      (godLvl == 1) mult *= 1.15;
         else if (godLvl == 2) mult *= 1.1;
         else if (godLvl == 3) mult *= 1.05;
 
-        var godLvl = Game.hasGod('ages');
+        godLvl = Game.hasGod('ages');
         if      (godLvl == 1) mult *= 1 + 0.15 * Math.sin((Date.now() / 1000 / (60*60*3))  * Math.PI*2);
         else if (godLvl == 2) mult *= 1 + 0.15 * Math.sin((Date.now() / 1000 / (60*60*12)) * Math.PI*2);
         else if (godLvl == 3) mult *= 1 + 0.15 * Math.sin((Date.now() / 1000 / (60*60*24)) * Math.PI*2);
 
-        var godLvl = Game.hasGod('decadence');
+        godLvl = Game.hasGod('decadence');
         if      (godLvl == 1) buildMult *= 0.93;
         else if (godLvl == 2) buildMult *= 0.95;
         else if (godLvl == 3) buildMult *= 0.98;
 
-        var godLvl = Game.hasGod('industry');
+        godLvl = Game.hasGod('industry');
         if      (godLvl == 1) buildMult *= 1.1;
         else if (godLvl == 2) buildMult *= 1.06;
         else if (godLvl == 3) buildMult *= 1.03;
 
-        var godLvl = Game.hasGod('labor');
+        godLvl = Game.hasGod('labor');
         if      (godLvl == 1) buildMult *= 0.97;
         else if (godLvl == 2) buildMult *= 0.98;
         else if (godLvl == 3) buildMult *= 0.99;
@@ -265,29 +265,29 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
 
     if (willHave('Santa\'s legacy', testUpgrade)) mult *= 1 + (Game.santaLevel + 1 + testSanta) * 0.03;
 
-    for (var i in Game.Objects) {
-        var me = Game.Objects[i];
-        var storedCps = calculateBuildingCps(me.name, testBuy, testBuyCount, testUpgrade);
-        if (Game.ascensionMode != 1) storedCps *= (1 + me.level * 0.01) * buildMult;
-        var storedTotalCps = amount(me, testBuy, testBuyCount) * storedCps;
+    for (let i in Game.Objects) {
+        const building = Game.Objects[i];
+        let storedCps = calculateBuildingCps(building.name, testBuy, testBuyCount, testUpgrade);
+        if (Game.ascensionMode != 1) storedCps *= (1 + building.level * 0.01) * buildMult;
+        const storedTotalCps = amount(building, testBuy, testBuyCount) * storedCps;
         cookiesPs += storedTotalCps;
     }
 
     if (willHave('"egg"', testUpgrade)) cookiesPs += 9;
 
-    var milkProgress = (Game.AchievementsOwned + testAchievement)/25;
-    var milkMult = 1;
+    const milkProgress = (Game.AchievementsOwned + testAchievement)/25;
+    let milkMult = 1;
     if (willHave('Santa\'s milk and cookies', testUpgrade)) milkMult *= 1.05;
     milkMult *= 1 + Game.auraMult('Breath of Milk') * 0.05;
     if (Game.hasGod) {
-        var godLvl = Game.hasGod('mother');
+        const godLvl = Game.hasGod('mother');
         if      (godLvl == 1) milkMult *= 1.1;
         else if (godLvl == 2) milkMult *= 1.05;
         else if (godLvl == 3) milkMult *= 1.03;
     }
     milkMult *= Game.eff('milk');
 
-    var catMult = 1;
+    let catMult = 1;
 
     if (willHave('Kitten helpers',                            testUpgrade)) catMult *= (1 + milkProgress * 0.1   * milkMult);
     if (willHave('Kitten workers',                            testUpgrade)) catMult *= (1 + milkProgress * 0.125 * milkMult);
@@ -307,7 +307,7 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
 
     mult *= catMult;
 
-    var eggMult = 1;
+    let eggMult = 1;
     if (willHave(  'Chicken egg', testUpgrade)) eggMult *= 1.01;
     if (willHave(     'Duck egg', testUpgrade)) eggMult *= 1.01;
     if (willHave(   'Turkey egg', testUpgrade)) eggMult *= 1.01;
@@ -322,8 +322,7 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
     if (willHave(    'Ant larva', testUpgrade)) eggMult *= 1.01;
     if (willHave(  'Century egg', testUpgrade)) {
         //the boost increases a little every day, with diminishing returns up to +10% on the 100th day
-        var day = Math.floor((Date.now() - Game.startDate) / 1000 / 10) * 10 / 60 / 60 / 24;
-        day = Math.min(day, 100);
+        const day = Math.min(Math.floor((Date.now() - Game.startDate) / 1000 / 10) * 10 / 60 / 60 / 24, 100);
         eggMult *= 1 + (1 - Math.pow(1 - day/100, 3)) * 0.1;
     }
 
@@ -333,44 +332,41 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
 
     mult *= 1 + auraMultRadiantAppetite(testAura);
 
-    var n = Game.shimmerTypes['golden'].n;
-    var auraMult = Game.auraMult('Dragon\'s Fortune');
-    for (var i=0; i<n; i++) {
+    let auraMult = Game.auraMult('Dragon\'s Fortune');
+    for (let i=0; i<Game.shimmerTypes['golden'].n; ++i) {
         mult *= 1 + auraMult * 1.23;
     }
 
-    var rawCookiesPs = cookiesPs * mult;
-
-    var sucking = 0;
-    for (var i in Game.wrinklers) {
+    let sucking = 0;
+    for (let i in Game.wrinklers) {
         if (Game.wrinklers[i].phase == 2) {
             sucking++;
         }
     }
-    var suckRate = 1/20;
+    let suckRate = 1/20;
     suckRate *= Game.eff('wrinklerEat');
 
     if (willHave('Elder Covenant', testUpgrade)) mult *= 0.95;
 
     if (willHave('Golden switch [off]', testUpgrade)) {
-        var goldenSwitchMult = 1.5;
+        let goldenSwitchMult = 1.5;
         if (willHave('Residual luck', testUpgrade)) {
-            var upgrades = Game.goldenCookieUpgrades;
-            for (var i in upgrades) {
+            const upgrades = Game.goldenCookieUpgrades;
+            for (let i in upgrades) {
                 if (willHave(upgrades[i], testUpgrade)) goldenSwitchMult += 0.1;
             }
         }
         mult *= goldenSwitchMult;
     }
     if (willHave('Shimmering veil [off]', testUpgrade)) {
-        var veilMult = 0.5;
+        let veilMult = 0.5;
         if (willHave('Reinforced membrane', testUpgrade)) veilMult += 0.1;
         mult *= 1 + veilMult;
     }
     if (willHave('Magic shenanigans',  testUpgrade)) mult *= 1000;
     if (willHave('Occult obstruction', testUpgrade)) mult *= 0;
 
-    for (var i in Game.buffs) {
+    for (let i in Game.buffs) {
         if (typeof Game.buffs[i].multCpS != 'undefined') mult *= Game.buffs[i].multCpS;
     }
 
@@ -384,9 +380,9 @@ function calculateTotalCps(isDefault, args) {
         console.log(clicksPerSecond.toFixed(1) + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
     }
 
-    var baseCps = calculateCps(...args);
-    var clickCps = calculateClickCps(baseCps, ...args);
-    var totalCps = baseCps + clickCps;
+    const baseCps = calculateCps(...args);
+    const clickCps = calculateClickCps(baseCps, ...args);
+    const totalCps = baseCps + clickCps;
 
     if (isDefault && trueClicksPerSecond) {
         console.log((100*clickCps/totalCps).toFixed(1) + '% of cookie production is due to autoclicker');
@@ -397,23 +393,23 @@ function calculateTotalCps(isDefault, args) {
 }
 
 function formatSeconds(rawSeconds) {
-    var temp = Math.floor(rawSeconds);
-    var seconds = temp%60;
-    var timeString = seconds.toString();
+    let temp = Math.floor(rawSeconds);
+    const seconds = temp%60;
+    let timeString = seconds.toString();
 
     temp = Math.floor(temp/60);
     if (temp) {
         if (seconds < 10) timeString = '0' + timeString;
-        var minutes = temp%60;
+        const minutes = temp%60;
         timeString = minutes + ':' + timeString;
 
         temp = Math.floor(temp/60);
         if (temp) {
             if (minutes < 10) timeString = '0' + timeString;
-            var hours = temp%24;
+            const hours = temp%24;
             timeString = hours + ':' + timeString;
 
-            var days = Math.floor(temp/24);
+            const days = Math.floor(temp/24);
             if (days) {
                 if (hours < 10) timeString = '0' + timeString;
                 timeString = days + ':' + timeString;
@@ -437,8 +433,8 @@ function clog(thing, message) {
 }
 
 function calculateBuildingPrice(buildingName, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
-    var building = Game.Objects[buildingName];
-    var price = building.basePrice*Math.pow(Game.priceIncrease,Math.max(0,building.amount-building.free));
+    const building = Game.Objects[buildingName];
+    let price = building.basePrice * Math.pow(Game.priceIncrease, Math.max(0, building.amount - building.free));
 
     if (willHave('Season savings',    testUpgrade)) price *= 0.99;
     if (willHave('Santa\'s dominion', testUpgrade)) price *= 0.99;
@@ -454,7 +450,7 @@ function calculateBuildingPrice(buildingName, testBuy, testBuyCount, testUpgrade
     price *= Game.eff('buildingCost');
 
     if (Game.hasGod) {
-        var godLvl = Game.hasGod('creation');
+        const godLvl = Game.hasGod('creation');
         if      (godLvl == 1) price *= 0.93;
         else if (godLvl == 2) price *= 0.95;
         else if (godLvl == 3) price *= 0.98;
@@ -463,8 +459,8 @@ function calculateBuildingPrice(buildingName, testBuy, testBuyCount, testUpgrade
 }
 
 function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
-    var upgrade = Game.Upgrades[upgradeName];
-    var price = upgrade.basePrice;
+    const upgrade = Game.Upgrades[upgradeName];
+    let price = upgrade.basePrice;
 
     if (upgrade.priceFunc) price = upgrade.priceFunc(this);
     if (price == 0) return 0;
@@ -491,9 +487,9 @@ function calculatePrice(type, name, args) {
 }
 
 function calculateBuildingPriceMultiplier(buyCount) {
-    var mult = 0;
-    var add = 1;
-    for (var i=0; i<buyCount; ++i) {
+    let mult = 0;
+    let add = 1;
+    for (let i=0; i<buyCount; ++i) {
         mult += add;
         add *= 1.15;
     }
@@ -501,7 +497,7 @@ function calculateBuildingPriceMultiplier(buyCount) {
 }
 
 function createMultiBuildingThing(args) {
-    var thing = {
+    let thing = {
         type: 'building',
         name: args[0],
         buyCount: args[1],
@@ -523,26 +519,26 @@ function doOrCalculateBestThing(){
         Game.clickLump();
     }
 
-    var bufferLine = 0;
+    let bufferLine = 0;
     // Pop phase 2 wrinklers for drops
     if (['easter', 'halloween'].includes(Game.season)) {
-        for (var i in Game.wrinklers) {
-            var me = Game.wrinklers[i];
-            if (me.phase == 2 && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
+        for (let i in Game.wrinklers) {
+            const wrinkler = Game.wrinklers[i];
+            if (wrinkler.phase == 2 && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) {
                 clog({type: 'wrinkler', name: i});
                 bufferLine = 1;
-                me.hp = -10;
+                wrinkler.hp = -10;
             }
         }
     }
     // Pop wrinklers for achievements
     else if (!Game.HasAchiev('Moistburster') || !Game.HasAchiev('Last Chance to See')) {
-        for (var i in Game.wrinklers) {
-            var me = Game.wrinklers[i];
-            if (me.phase && (!me.type || !Game.HasAchiev('Last Chance to See'))) {
+        for (let i in Game.wrinklers) {
+            const wrinkler = Game.wrinklers[i];
+            if (wrinkler.phase && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) {
                 clog({type: 'wrinkler', name: i});
                 bufferLine = 1
-                me.hp = -10;
+                wrinkler.hp = -10;
             }
         }
     }
@@ -564,75 +560,75 @@ function doOrCalculateBestThing(){
     }
 
     // Start best purchase calculation
-    var things = {};
-    var args = {};
+    let things = {};
+    let args = {};
     currentCps = calculateTotalCps(1, defaultArgs);
 
-    var hasLovelyCookies = Game.Has(   'Pure heart biscuits') &&
+    const hasLovelyCookies = Game.Has(   'Pure heart biscuits') &&
                            Game.Has( 'Ardent heart biscuits') &&
                            Game.Has(   'Sour heart biscuits') &&
                            Game.Has('Weeping heart biscuits') &&
                            Game.Has( 'Golden heart biscuits') &&
                            Game.Has('Eternal heart biscuits');
-    var hasSpookyCookies = Game.Has(  'Skull cookies') &&
+    const hasSpookyCookies = Game.Has(  'Skull cookies') &&
                            Game.Has(  'Ghost cookies') &&
                            Game.Has(    'Bat cookies') &&
                            Game.Has(  'Slime cookies') &&
                            Game.Has('Pumpkin cookies') &&
                            Game.Has('Eyeball cookies') &&
                            Game.Has( 'Spider cookies');
-    var eggs = 0;
-    for (var i in Game.easterEggs) {
+    let eggs = 0;
+    for (let i in Game.easterEggs) {
         if (Game.HasUnlocked(Game.easterEggs[i])) eggs++;
     }
 
-    for (var i in Game.UpgradesInStore) {
-        var me = Game.UpgradesInStore[i];
+    for (let i in Game.UpgradesInStore) {
+        const upgrade = Game.UpgradesInStore[i];
 
-        if (me.name == 'Chocolate egg' && !me.isVaulted()) me.vault();
+        if (upgrade.name == 'Chocolate egg' && !upgrade.isVaulted()) upgrade.vault();
 
         // Activate optimal season
         else if (
-            me.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                           && Game.santaLevel  < 14 && Game.Has(  'Titanium mouse') ||
-            me.name == 'Lovesick biscuit' && Game.season != 'valentines'                                   && !hasLovelyCookies && Game.santaLevel == 14 && Game.Has('Fantasteel mouse') ||
-            me.name ==    'Bunny biscuit' && Game.season != 'easter'                         && eggs  < 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
-            me.name ==  'Ghostly biscuit' && Game.season != 'halloween' && !hasSpookyCookies && eggs == 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
-            me.name ==  'Festive biscuit' && Game.season != 'christmas' &&  hasSpookyCookies && eggs == 20 &&  hasLovelyCookies
+            upgrade.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                           && Game.santaLevel  < 14 && Game.Has(  'Titanium mouse') ||
+            upgrade.name == 'Lovesick biscuit' && Game.season != 'valentines'                                   && !hasLovelyCookies && Game.santaLevel == 14 && Game.Has('Fantasteel mouse') ||
+            upgrade.name ==    'Bunny biscuit' && Game.season != 'easter'                         && eggs  < 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
+            upgrade.name ==  'Ghostly biscuit' && Game.season != 'halloween' && !hasSpookyCookies && eggs == 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
+            upgrade.name ==  'Festive biscuit' && Game.season != 'christmas' &&  hasSpookyCookies && eggs == 20 &&  hasLovelyCookies
         ) {
-            best = {type: 'upgrade', name: me.name, percent: 0, value: 0};
-            best.price = calculateUpgradePrice(me.name, ...defaultArgs);
+            best = {type: 'upgrade', name: upgrade.name, percent: 0, value: 0};
+            best.price = calculateUpgradePrice(upgrade.name, ...defaultArgs);
             clog(best, 'season');
             return;
         }
 
         else if (
-            me.pool != 'toggle' && !me.isVaulted() &&
-            (!me.name == 'Communal brainsweep' || !Game.HasAchiev('Elder slumber') || !Game.HasAchiev('Elder calm') || !Game.HasAchiev('Last Chance to See'))
+            upgrade.pool != 'toggle' && !upgrade.isVaulted() &&
+            (!upgrade.name == 'Communal brainsweep' || !Game.HasAchiev('Elder slumber') || !Game.HasAchiev('Elder calm') || !Game.HasAchiev('Last Chance to See'))
         ) {
-            var upgradePrice = calculateUpgradePrice(me.name, ...defaultArgs);
+            const upgradePrice = calculateUpgradePrice(upgrade.name, ...defaultArgs);
 
             // Buy cheap upgrades, don't waste time calculating
             if (upgradePrice < Game.cookies/1000000) {
-                clog({type: 'upgrade', name: me.name, price: upgradePrice}, 'cheap');
-                me.buy(1);
+                clog({type: 'upgrade', name: upgrade.name, price: upgradePrice}, 'cheap');
+                upgrade.buy(1);
             } else {
-                args[me.name] = ['', 0, me.name, 0, 0, ''];
-                things[me.name] = {type: 'upgrade', name: me.name, cps: calculateTotalCps(0, args[me.name]), price: upgradePrice};
-                things[me.name].percent = (things[me.name].cps / currentCps - 1) * 100;
-                things[me.name].value = things[me.name].percent / things[me.name].price;
+                args[upgrade.name] = ['', 0, upgrade.name, 0, 0, ''];
+                things[upgrade.name] = {type: 'upgrade', name: upgrade.name, cps: calculateTotalCps(0, args[upgrade.name]), price: upgradePrice};
+                things[upgrade.name].percent = (things[upgrade.name].cps / currentCps - 1) * 100;
+                things[upgrade.name].value = things[upgrade.name].percent / things[upgrade.name].price;
             }
         }
 
         else if (
-            me.name == 'Elder Pledge'   && !Game.HasAchiev('Elder slumber') ||
-            me.name == 'Elder Covenant' && Game.Upgrades['Elder Pledge'].unlocked==0 ||
-            me.name == 'Revoke Elder Covenant'
-        ) things[me.name] = {type: 'upgrade', name: me.name, price: calculateUpgradePrice(me.name, ...defaultArgs), ignore: 1};
+            upgrade.name == 'Elder Pledge'   && !Game.HasAchiev('Elder slumber') ||
+            upgrade.name == 'Elder Covenant' && Game.Upgrades['Elder Pledge'].unlocked==0 ||
+            upgrade.name == 'Revoke Elder Covenant'
+        ) things[upgrade.name] = {type: 'upgrade', name: upgrade.name, price: calculateUpgradePrice(upgrade.name, ...defaultArgs), ignore: 1};
 
     }
 
-    for (var i in Game.Objects) {
-        var building = Game.Objects[i];
+    for (let i in Game.Objects) {
+        const building = Game.Objects[i];
         args[building.name] = [building.name, 1, '', 0, 0, ''];
         things[building.name] = {
             type: 'building',
@@ -644,11 +640,11 @@ function doOrCalculateBestThing(){
         things[building.name].value = things[building.name].percent / things[building.name].price;
 
         // Check tiered achievements
-        for (var j in building.tieredAchievs) {
+        for (let j in building.tieredAchievs) {
             if (Game.Tiers[j].achievUnlock > building.amount) {
                 if (!Game.HasAchiev(building.tieredAchievs[j].name)) {
-                    var buyCount = Game.Tiers[j].achievUnlock - building.amount;
-                    var thingKey = building.name + ' Tier';
+                    const buyCount = Game.Tiers[j].achievUnlock - building.amount;
+                    const thingKey = building.name + ' Tier';
                     args[thingKey] = [building.name, buyCount, '', 1, 0, 0];
                     things[thingKey] = createMultiBuildingThing(args[thingKey]);
                 }
@@ -659,7 +655,7 @@ function doOrCalculateBestThing(){
 
         // Cursor doesn't use tiered achievements :(
         if (building.name == 'Cursor') {
-            var cursorAchievements = [
+            const cursorAchievements = [
                 {achievUnlock: 1,   name: 'Click'},
                 {achievUnlock: 2,   name: 'Double-click'},
                 {achievUnlock: 50,  name: 'Mouse wheel'},
@@ -671,10 +667,10 @@ function doOrCalculateBestThing(){
                 {achievUnlock: 600, name: 'With her finger and her thumb'},
             ];
 
-            for (var j in cursorAchievements) {
+            for (let j in cursorAchievements) {
                 if (cursorAchievements[j].achievUnlock > building.amount) {
                     if (!Game.HasAchiev(cursorAchievements[j].name)) {
-                        var buyCount = cursorAchievements[j].achievUnlock - building.amount;
+                        const buyCount = cursorAchievements[j].achievUnlock - building.amount;
                         args['Cursor Tier'] = [building.name, buyCount, '', 1, 0, 0];
                         things['Cursor Tier'] = createMultiBuildingThing(args['Cursor Tier']);
                     }
@@ -689,8 +685,8 @@ function doOrCalculateBestThing(){
 
     // Find best value purchase
     best = {value: 0};
-    for (var i in things) {
-        var thing = things[i];
+    for (let i in things) {
+        const thing = things[i];
         if (thing.value > best.value) best = thing;
     }
 
@@ -698,12 +694,12 @@ function doOrCalculateBestThing(){
     if (best.name) {
         clog(best, 'best');
 
-        var betterThings = [best.name];
+        let betterThings = [best.name];
 
         while (betterThings.length) {
-            var better = {value: -1};
-            for (var i=0; i<betterThings.length; ++i) {
-                var thing = things[betterThings[i]];
+            let better = {value: -1};
+            for (let i=0; i<betterThings.length; ++i) {
+                const thing = things[betterThings[i]];
                 if (thing.value > better.value) better = thing;
             }
 
@@ -713,12 +709,12 @@ function doOrCalculateBestThing(){
             }
 
             betterThings = [];
-            for (var i in things) {
-                var thing = things[i];
+            for (let i in things) {
+                const thing = things[i];
                 if (thing.name != best.name && thing.price < best.price && !thing.ignore) {
                     // These are slightly inaccurate for bulk building purchases, it might be a problem
-                    var timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, args[thing.name])/thing.cps;
-                    var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, args[best.name])/best.cps;
+                    const timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, args[thing.name])/thing.cps;
+                    const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, args[best.name])/best.cps;
                     if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) betterThings.push(thing.name);
                 }
             }
@@ -727,11 +723,11 @@ function doOrCalculateBestThing(){
 
     // Override best purchase with Christmas upgrades
     if (Game.Has('A festive hat') && Game.santaLevel<14 && (!best.name || !Game.santaDrops.includes(best.name))) {
-        var santaPrice = Math.pow(Game.santaLevel+1,Game.santaLevel+1);
+        const santaPrice = Math.pow(Game.santaLevel+1,Game.santaLevel+1);
 
-        var upgradeSanta = 1;
-        for (var i in things) {
-            var thing = things[i];
+        let upgradeSanta = 1;
+        for (let i in things) {
+            const thing = things[i];
             if (Game.santaDrops.includes(thing.name)) {
                 upgradeSanta = 0;
                 // Santa unlocks take priority to continue unlocking them
@@ -764,8 +760,8 @@ function doOrCalculateBestThing(){
                 best = things.santa;
                 clog(best);
             } else if (things.santa.value > best.value) {
-                var timeTillBothThingsIfFirst = things.santa.price/currentCps + calculatePrice(best.type, best.name, args.santa)/things.santa.cps;
-                var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'santa', args[best.name])/best.cps;
+                const timeTillBothThingsIfFirst = things.santa.price/currentCps + calculatePrice(best.type, best.name, args.santa)/things.santa.cps;
+                const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'santa', args[best.name])/best.cps;
                 if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
                     best = things.santa;
                     clog(best, 'better');
@@ -777,18 +773,17 @@ function doOrCalculateBestThing(){
     // Override best purchase with dragon upgrades
     if (Game.Has('A crumbly egg') && Game.dragonLevel < 24 && Game.dragonLevels[Math.max(Game.dragonLevel,5)].cost()) {
         things.dragon = {type: 'upgrade', name: 'dragon', price: 0};
-        var buildingIndex;
+        let buildingIndex;
 
         if (Game.dragonLevel < 22) {
             buildingIndex = Math.max(Game.dragonLevel-5,0);
             things.dragon.price = Game.ObjectsById[buildingIndex].price*20/3;
-            for(var i=Game.dragonLevel; i<5; ++i) things.dragon.price += 1000000*Math.pow(2, i);
+            for(let i=Game.dragonLevel; i<5; ++i) things.dragon.price += 1000000*Math.pow(2, i);
         } else {
-            for (var i in Game.Objects) {
-                var me = Game.Objects[i];
-                things.dragon.price += me.price*20/3;
+            for (let i in Game.Objects) {
+                things.dragon.price += calculateBuildingPrice(Game.Objects[i].name, ...defaultArgs)*20/3;
             }
-            if (Game.dragonLevel == 22) things.dragon.price += Game.Upgrades['Dragon cookie'].getPrice();
+            if (Game.dragonLevel == 22) things.dragon.price += calculateUpgradePrice(Game.Upgrades['Dragon cookie'].name, ...defaultArgs);
         }
 
         if (!best.name) {
@@ -821,8 +816,8 @@ function doOrCalculateBestThing(){
                     best = things.dragon;
                     clog(best, 'best');
                 } else if (things.dragon.value > best.value || things.dragon.price < best.price) {
-                    var timeTillBothThingsIfFirst = things.dragon.price/currentCps + calculatePrice(best.type, best.name, args.dragon)/things.dragon.cps;
-                    var timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'dragon', args[best.name])/best.cps;
+                    const timeTillBothThingsIfFirst = things.dragon.price/currentCps + calculatePrice(best.type, best.name, args.dragon)/things.dragon.cps;
+                    const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'dragon', args[best.name])/best.cps;
                     if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
                         best = things.dragon;
                         clog(best, 'better');
@@ -833,8 +828,8 @@ function doOrCalculateBestThing(){
     }
 
     // Override best purchase with specific upgrades if cheaper
-    for (var i in things) {
-        var thing = things[i];
+    for (let i in things) {
+        const thing = things[i];
         if ([
             'Lucky day',
             'Serendipity',
@@ -860,32 +855,32 @@ function doOrCalculateBestThing(){
 
     // Pop biggest wrinkler if best purchase is more than an hour out at base Cps, and wrinklers will get there
     if (!Game.buffs.length) {
-        var bestWrinkler = -1;
-        var bestWrinklerSucked = 0;
-        var totalSucked = 0;
+        let bestWrinkler = -1;
+        let bestWrinklerSucked = 0;
+        let totalSucked = 0;
 
-        var toSuck = 1.1;
+        let toSuck = 1.1;
         if (Game.Has('Sacrilegious corruption')) toSuck *= 1.05;
         if (Game.Has('Wrinklerspawn')) toSuck *= 1.05;
         if (Game.hasGod) {
-            var godLvl = Game.hasGod('scorn');
-            if (godLvl == 1) toSuck *= 1.15;
+            const godLvl = Game.hasGod('scorn');
+            if      (godLvl == 1) toSuck *= 1.15;
             else if (godLvl == 2) toSuck *= 1.1;
             else if (godLvl == 3) toSuck *= 1.05;
         }
 
-        for (var i=0; i<Game.getWrinklersMax(); ++i) {
-            var me = Game.wrinklers[i];
-            if (!me.type) {
-                totalSucked += me.sucked;
-                if (me.sucked > bestWrinklerSucked) {
+        for (let i=0; i<Game.getWrinklersMax(); ++i) {
+            const wrinkler = Game.wrinklers[i];
+            if (!wrinkler.type) {
+                totalSucked += wrinkler.sucked;
+                if (wrinkler.sucked > bestWrinklerSucked) {
                     bestWrinkler = i;
-                    bestWrinklerSucked = me.sucked;
+                    bestWrinklerSucked = wrinkler.sucked;
                 }
             }
         }
 
-        var cookieDiff = best.price - Game.cookies;
+        const cookieDiff = best.price - Game.cookies;
         if (totalSucked*toSuck >= cookieDiff && cookieDiff > currentCps * 60 * 60) {
             best = {type: 'wrinkler', name: bestWrinkler.toString(), price: 0};
             clog(best);
@@ -915,22 +910,25 @@ function playTheGame() {
             if (best.price < Game.cookies/1000000) Game.Objects[best.name].buy(50);
             else if (best.price < Game.cookies/1000) Game.Objects[best.name].buy(10);
             else Game.Objects[best.name].buy(1);
+
             if (!Game.HasAchiev('Just wrong')) Game.Objects['Grandma'].sell(1);
         } else if (best.type == 'upgrade') {
             if (['santa', 'dragon'].includes(best.name)) {
-                Game.specialTab=best.name;
+                Game.specialTab = best.name;
                 Game.ToggleSpecialMenu(1);
                 upgradeSpecial(best.name);
             } else Game.Upgrades[best.name].buy(1);
         } else if (best.type == 'aura') {
-            Game.specialTab='dragon';
+            Game.specialTab = 'dragon';
             Game.ToggleSpecialMenu(1);
-            var highestBuilding={};
-            for (var i in Game.Objects) {
-                if (Game.Objects[i].amount>0) highestBuilding=Game.Objects[i];
+
+            let highestBuilding={};
+            for (let i in Game.Objects) {
+                if (Game.Objects[i].amount>0) highestBuilding = Game.Objects[i];
             }
             if (highestBuilding.id) Game.ObjectsById[highestBuilding.id].sacrifice(1);
-            if (best.name == 'Dragonflight') Game.dragonAura=10;
+
+            if      (best.name == 'Dragonflight')     Game.dragonAura=10;
             else if (best.name == 'Radiant Appetite') Game.dragonAura2=15;
         } else if (best.type == 'wrinkler') Game.wrinklers[Number(best.name)].hp = -10;
 
@@ -946,7 +944,7 @@ function playTheGame() {
     }
 
     now = new Date();
-    var nowSeconds = now.getSeconds();
+    const nowSeconds = now.getSeconds();
     if (clickCountFlag && !(nowSeconds%15)) {
         best = {};
 
@@ -971,19 +969,19 @@ function playTheGame() {
     Game.ClickCookie();
 }
 
-var botInterval;
-var best;
-var buyThings = 1;
-var restoreHeight;
-var now;
-var clickCountFlag;
-var clickCountStart;
-var clickCountStarted;
-var clicksPerSecond = 150;
-var trueClicksPerSecond;
-var clickCount = 0;
-var defaultArgs = ['', 0, '', 0, 0, ''];
-var currentCps;
+let botInterval;
+let best;
+let buyThings = 1;
+let restoreHeight;
+let now;
+let clickCountFlag;
+let clickCountStart;
+let clickCountStarted;
+let clicksPerSecond = 150;
+let trueClicksPerSecond;
+let clickCount = 0;
+const defaultArgs = ['', 0, '', 0, 0, ''];
+let currentCps;
 
 function initialize() {
     Game.Win('Cheated cookies taste awful');
