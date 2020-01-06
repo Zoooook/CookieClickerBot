@@ -1,4 +1,7 @@
-// take into account wrinkler cps
+// wait for shiny wrinkler to bite cookie
+// accurate click calculation during cursed finger
+// grab all cheap upgrades at once
+// find out why it's printing cheap upgrades multiple times
 // take into account all achievements, upgrade unlocks
 // ascension -- maybe need to take into account longterm expected production, ignore buffs, also upgrade unlocks
 // save scum sugar lump harvesting
@@ -676,7 +679,7 @@ function doOrCalculateBestThing(){
 
         else if (
             upgrade.pool != 'toggle' && !upgrade.isVaulted() &&
-            (!upgrade.name == 'Communal brainsweep' || !Game.HasAchiev('Elder slumber') || !Game.HasAchiev('Elder calm') || !Game.HasAchiev('Last Chance to See'))
+            (upgrade.name != 'Communal brainsweep' || !Game.HasAchiev('Elder slumber') || !Game.HasAchiev('Elder calm') || !Game.HasAchiev('Last Chance to See'))
         ) {
             const upgradePrice = calculateUpgradePrice(upgrade.name, ...defaultArgs);
 
