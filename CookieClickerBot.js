@@ -1,4 +1,3 @@
-// track down ETA bug
 // keep 2 overlapping click counts
 // take into account all achievements, upgrade unlocks
 // ascension -- maybe need to take into account longterm expected production, ignore buffs
@@ -526,30 +525,20 @@ function doOrCalculateBestThing(){
         Game.clickLump();
     }
 
-    let bufferLine = 0;
     // Pop phase 2 wrinklers for drops
     if (['easter', 'halloween'].includes(Game.season)) {
         for (let i in Game.wrinklers) {
             const wrinkler = Game.wrinklers[i];
-            if (wrinkler.phase == 2 && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) {
-                clog({type: 'wrinkler', name: i});
-                bufferLine = 1;
-                wrinkler.hp = -10;
-            }
+            if (wrinkler.phase == 2 && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
         }
     }
     // Pop wrinklers for achievements
     else if (!Game.HasAchiev('Moistburster') || !Game.HasAchiev('Last Chance to See')) {
         for (let i in Game.wrinklers) {
             const wrinkler = Game.wrinklers[i];
-            if (wrinkler.phase && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) {
-                clog({type: 'wrinkler', name: i});
-                bufferLine = 1
-                wrinkler.hp = -10;
-            }
+            if (wrinkler.phase && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
         }
     }
-    if (bufferLine) console.log('\n');
 
     // Set aura (sacrifice a building) before any more buildings are built
     if (Game.Has('A crumbly egg')) {
@@ -943,11 +932,7 @@ function playTheGame() {
         } else if (best.type == 'wrinkler') Game.wrinklers[Number(best.name)].hp = -10;
 
         best = {};
-    } else if(Game.shimmers.length && (Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) {
-        console.log('shimmer: ' + Game.shimmers[0].type);
-        console.log('\n');
-        Game.shimmers[0].pop();
-    }
+    } else if(Game.shimmers.length && (Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) Game.shimmers[0].pop();
     else if (!best.name) {
         if (restoreHeight && Game.HasAchiev('Cookie-dunker')) {
             Game.LeftBackground.canvas.height = restoreHeight;
