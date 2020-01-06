@@ -1,9 +1,9 @@
+// empty line before not after
 // keep 2 overlapping click counts
 // take into account all achievements, upgrade unlocks
 // ascension -- maybe need to take into account longterm expected production, ignore buffs
 // save scum sugar lump harvesting
 
-// figure out if game is running slower than 30fps
 // math for auras and grandmas
 // minigames, level objects
 
@@ -484,11 +484,6 @@ function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, 
     return Math.ceil(price);
 }
 
-function calculatePrice(type, name, args) {
-    if (type == 'building') return calculateBuildingPrice(name, ...args);
-    if (type == 'upgrade')  return calculateUpgradePrice( name, ...args);
-}
-
 function calculateBuildingPriceMultiplier(buyCount) {
     let mult = 0;
     let add = 1;
@@ -497,6 +492,37 @@ function calculateBuildingPriceMultiplier(buyCount) {
         add *= 1.15;
     }
     return mult;
+}
+
+function calculateTotalBuildingCost(args) {
+    let cost = 0;
+    for (let i in Game.Objects) {
+        cost += calculateBuildingPrice(Game.Objects[i].name, ...args) * 20/3;
+    }
+    return cost;
+}
+
+function calculatePrice(type, name, buyCount, args) {
+    if (type == 'building') return calculateBuildingPrice(name, ...args) * calculateBuildingPriceMultiplier(buyCount);
+    if (type == 'upgrade') {
+        if (name == 'santa') return Math.pow(Game.santaLevel+1,Game.santaLevel+1);
+
+        if (name == 'dragon') {
+            let price = 0;
+            if (Game.dragonLevel < 22) {
+                // overloading buyCount as buildingIndex for dragon, bad practice but whatever
+                price = Game.ObjectsById[buyCount].price * 20/3;
+                for(let i=Game.dragonLevel; i<5; ++i) price += 1000000*Math.pow(2, i);
+            } else {
+                price = calculateTotalBuildingCost(args);
+                if (Game.dragonLevel == 22) price += calculateUpgradePrice(Game.Upgrades['Dragon cookie'].name, ...args);
+            }
+
+            return price;
+        }
+
+        return calculateUpgradePrice(name, ...args);
+    }
 }
 
 function createMultiBuildingThing(args) {
@@ -712,8 +738,8 @@ function doOrCalculateBestThing(){
                 const thing = things[i];
                 if (thing.name != best.name && thing.price < best.price && !thing.ignore) {
                     // These are slightly inaccurate for bulk building purchases, it might be a problem
-                    const timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, args[thing.name])/thing.cps;
-                    const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, args[best.name])/best.cps;
+                    const timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, best.buyCount || 1, args[thing.name])/thing.cps;
+                    const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, thing.buyCount || 1, args[best.name])/best.cps;
                     if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) betterThings.push(thing.name);
                 }
             }
@@ -722,7 +748,7 @@ function doOrCalculateBestThing(){
 
     // Override best purchase with Christmas upgrades
     if (Game.Has('A festive hat') && Game.santaLevel<14 && (!best.name || !Game.santaDrops.includes(best.name))) {
-        const santaPrice = Math.pow(Game.santaLevel+1,Game.santaLevel+1);
+        const santaPrice = calculatePrice('upgrade', 'santa');
 
         let upgradeSanta = 1;
         for (let i in things) {
@@ -759,8 +785,8 @@ function doOrCalculateBestThing(){
                 best = things.santa;
                 clog(best);
             } else if (things.santa.value > best.value) {
-                const timeTillBothThingsIfFirst = things.santa.price/currentCps + calculatePrice(best.type, best.name, args.santa)/things.santa.cps;
-                const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'santa', args[best.name])/best.cps;
+                const timeTillBothThingsIfFirst = things.santa.price/currentCps + calculatePrice(best.type, best.name, best.buyCount || 1, args.santa)/things.santa.cps;
+                const timeTillBothThingsIfSecond = best.price/currentCps + santaPrice/best.cps;
                 if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
                     best = things.santa;
                     clog(best, 'better');
@@ -771,19 +797,10 @@ function doOrCalculateBestThing(){
 
     // Override best purchase with dragon upgrades
     if (Game.Has('A crumbly egg') && Game.dragonLevel < 24 && Game.dragonLevels[Math.max(Game.dragonLevel,5)].cost()) {
-        things.dragon = {type: 'upgrade', name: 'dragon', price: 0};
-        let buildingIndex;
+        things.dragon = {type: 'upgrade', name: 'dragon'};
 
-        if (Game.dragonLevel < 22) {
-            buildingIndex = Math.max(Game.dragonLevel-5,0);
-            things.dragon.price = Game.ObjectsById[buildingIndex].price*20/3;
-            for(let i=Game.dragonLevel; i<5; ++i) things.dragon.price += 1000000*Math.pow(2, i);
-        } else {
-            for (let i in Game.Objects) {
-                things.dragon.price += calculateBuildingPrice(Game.Objects[i].name, ...defaultArgs)*20/3;
-            }
-            if (Game.dragonLevel == 22) things.dragon.price += calculateUpgradePrice(Game.Upgrades['Dragon cookie'].name, ...defaultArgs);
-        }
+        const buildingIndex = Math.max(Game.dragonLevel-5,0);
+        things.dragon.price = calculatePrice('upgrade', 'dragon', buildingIndex, defaultArgs);
 
         if (!best.name) {
             best = things.dragon;
@@ -815,8 +832,8 @@ function doOrCalculateBestThing(){
                     best = things.dragon;
                     clog(best, 'best');
                 } else if (things.dragon.value > best.value || things.dragon.price < best.price) {
-                    const timeTillBothThingsIfFirst = things.dragon.price/currentCps + calculatePrice(best.type, best.name, args.dragon)/things.dragon.cps;
-                    const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'dragon', args[best.name])/best.cps;
+                    const timeTillBothThingsIfFirst = things.dragon.price/currentCps + calculatePrice(best.type, best.name, best.buyCount || 1, args.dragon)/things.dragon.cps;
+                    const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'dragon', buildingIndex, args[best.name])/best.cps;
                     if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
                         best = things.dragon;
                         clog(best, 'better');
@@ -1022,11 +1039,3 @@ function stop() {
 
 initialize();
 start();
-
-function calculateTotalBuildingCost() {
-    let cost = 0;
-    for (let i in Game.Objects) {
-        cost += calculateBuildingPrice(Game.Objects[i].name, ...defaultArgs)*20/3;
-    }
-    return cost;
-}
