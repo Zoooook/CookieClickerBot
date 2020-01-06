@@ -132,68 +132,6 @@ function auraMultRadiantAppetite(testAura) {
     return 0;
 }
 
-function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade) {
-    if (Game.hasBuff('Cursed finger')) return Game.buffs['Cursed finger'].power;
-
-    let add = 0;
-    if (willHave(   'Thousand fingers', testUpgrade)) add += 0.1;
-    if (willHave(    'Million fingers', testUpgrade)) add += 0.5;
-    if (willHave(    'Billion fingers', testUpgrade)) add += 5;
-    if (willHave(   'Trillion fingers', testUpgrade)) add += 50;
-    if (willHave('Quadrillion fingers', testUpgrade)) add += 500;
-    if (willHave('Quintillion fingers', testUpgrade)) add += 5000;
-    if (willHave( 'Sextillion fingers', testUpgrade)) add += 50000;
-    if (willHave( 'Septillion fingers', testUpgrade)) add += 500000;
-    if (willHave(  'Octillion fingers', testUpgrade)) add += 5000000;
-    let num = 0;
-    for (let i in Game.Objects) {
-        num += amount(Game.Objects[i], testBuy, testBuyCount);
-    }
-    num -= amount(Game.Objects['Cursor'], testBuy, testBuyCount);
-    add = add * num;
-
-    if (willHave(      'Plastic mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave(         'Iron mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave(     'Titanium mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave(   'Adamantium mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave(  'Unobtainium mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave(      'Eludium mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave(    'Wishalloy mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave(   'Fantasteel mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave(   'Nevercrack mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave(    'Armythril mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave('Technobsidian mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave(   'Plasmarble mouse', testUpgrade)) add += cookiesPs*0.01;
-    if (willHave('Fortune #104',        testUpgrade)) add += cookiesPs*0.01;
-
-    let mult = 1;
-    if (willHave('Santa\'s helpers', testUpgrade)) mult *= 1.1;
-    if (willHave('Cookie egg',       testUpgrade)) mult *= 1.1;
-    if (willHave('Halo gloves',      testUpgrade)) mult *= 1.1;
-    mult *= Game.eff('click');
-
-    if (Game.hasGod) {
-        const    godLvl = Game.hasGod('labor');
-        if      (godLvl == 1) mult *= 1.15;
-        else if (godLvl == 2) mult *= 1.1;
-        else if (godLvl == 3) mult *= 1.05;
-    }
-
-    for (let i in Game.buffs) {
-        if (typeof Game.buffs[i].multClick != 'undefined') mult *= Game.buffs[i].multClick;
-    }
-
-    mult *= 1 + Game.auraMult('Dragon Cursor') * 0.05;
-
-    return mult * Game.ComputeCps(
-        1,
-        willHave('Reinforced index finger', testUpgrade) +
-        willHave('Carpal tunnel prevention cream', testUpgrade) +
-        willHave('Ambidextrous', testUpgrade),
-        add
-    );
-}
-
 function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
     let cookiesPs = 0;
     let mult = 1;
@@ -335,15 +273,6 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
         mult *= 1 + auraMult * 1.23;
     }
 
-    let sucking = 0;
-    for (let i in Game.wrinklers) {
-        if (Game.wrinklers[i].phase == 2) {
-            sucking++;
-        }
-    }
-    let suckRate = 1/20;
-    suckRate *= Game.eff('wrinklerEat');
-
     if (willHave('Elder Covenant', testUpgrade)) mult *= 0.95;
 
     if (willHave('Golden switch [off]', testUpgrade)) {
@@ -371,8 +300,103 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
     return cookiesPs * mult;
 }
 
+function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade) {
+    if (Game.hasBuff('Cursed finger')) return Game.buffs['Cursed finger'].power;
+
+    let add = 0;
+    if (willHave(   'Thousand fingers', testUpgrade)) add += 0.1;
+    if (willHave(    'Million fingers', testUpgrade)) add += 0.5;
+    if (willHave(    'Billion fingers', testUpgrade)) add += 5;
+    if (willHave(   'Trillion fingers', testUpgrade)) add += 50;
+    if (willHave('Quadrillion fingers', testUpgrade)) add += 500;
+    if (willHave('Quintillion fingers', testUpgrade)) add += 5000;
+    if (willHave( 'Sextillion fingers', testUpgrade)) add += 50000;
+    if (willHave( 'Septillion fingers', testUpgrade)) add += 500000;
+    if (willHave(  'Octillion fingers', testUpgrade)) add += 5000000;
+    let num = 0;
+    for (let i in Game.Objects) {
+        num += amount(Game.Objects[i], testBuy, testBuyCount);
+    }
+    num -= amount(Game.Objects['Cursor'], testBuy, testBuyCount);
+    add = add * num;
+
+    if (willHave(      'Plastic mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(         'Iron mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(     'Titanium mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(   'Adamantium mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(  'Unobtainium mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(      'Eludium mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(    'Wishalloy mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(   'Fantasteel mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(   'Nevercrack mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(    'Armythril mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave('Technobsidian mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(   'Plasmarble mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave('Fortune #104',        testUpgrade)) add += cookiesPs*0.01;
+
+    let mult = 1;
+    if (willHave('Santa\'s helpers', testUpgrade)) mult *= 1.1;
+    if (willHave('Cookie egg',       testUpgrade)) mult *= 1.1;
+    if (willHave('Halo gloves',      testUpgrade)) mult *= 1.1;
+    mult *= Game.eff('click');
+
+    if (Game.hasGod) {
+        const    godLvl = Game.hasGod('labor');
+        if      (godLvl == 1) mult *= 1.15;
+        else if (godLvl == 2) mult *= 1.1;
+        else if (godLvl == 3) mult *= 1.05;
+    }
+
+    for (let i in Game.buffs) {
+        if (typeof Game.buffs[i].multClick != 'undefined') mult *= Game.buffs[i].multClick;
+    }
+
+    mult *= 1 + Game.auraMult('Dragon Cursor') * 0.05;
+
+    return mult * Game.ComputeCps(
+        1,
+        willHave('Reinforced index finger', testUpgrade) +
+        willHave('Carpal tunnel prevention cream', testUpgrade) +
+        willHave('Ambidextrous', testUpgrade),
+        add
+    );
+}
+
 function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
     return clicksPerSecond * calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade);
+}
+
+function countWrinklers() {
+    let count = 0;
+    for (let i=0; i<Game.getWrinklersMax(); ++i) {
+        if (Game.wrinklers[i].phase == 2) ++count;
+    }
+    return count;
+}
+
+function calculateWrinklerBoostMultiplier() {
+    const witheredProportion = countWrinklers() * Game.eff('wrinklerEat') / 20;
+
+    let mult = witheredProportion * 1.1;
+    if (Game.Has('Sacrilegious corruption')) mult *= 1.05;
+    if (Game.Has('Wrinklerspawn'))           mult *= 1.05;
+    if (Game.hasGod) {
+        const godLvl = Game.hasGod('scorn');
+        if      (godLvl == 1) mult *= 1.15;
+        else if (godLvl == 2) mult *= 1.1;
+        else if (godLvl == 3) mult *= 1.05;
+    }
+
+    let boost = 1;
+    for (let i=0; i<Game.getWrinklersMax(); ++i) {
+        const wrinkler = Game.wrinklers[i];
+        if (wrinkler.phase == 2) {
+            boost -= .05;
+            if (wrinkler.type==1) boost += 3*mult;
+            else boost += mult;
+        }
+    }
+    return boost;
 }
 
 function calculateTotalCps(isDefault, args) {
@@ -387,12 +411,38 @@ function calculateTotalCps(isDefault, args) {
     const clickCps = calculateClickCps(baseCps, ...args);
     const totalCps = baseCps + clickCps;
 
-    if (isDefault && trueClicksPerSecond) {
-        console.log(totalCps.toPrecision(4) + ' cookies/second');
-        console.log((100 * clickCps / totalCps).toFixed(1) + '% of cookie production is due to autoclicker');
-    }
+    const numWrinklers = countWrinklers()
 
-    return totalCps;
+    if (numWrinklers) {
+        const witheredMultiplier = 1 - numWrinklers * Game.eff('wrinklerEat') / 20;
+        const apparentPassiveCps = baseCps * witheredMultiplier;
+        const apparentTotalCps = apparentPassiveCps + clickCps;
+
+        if (isDefault && trueClicksPerSecond) {
+            const boostedMultiplier = calculateWrinklerBoostMultiplier();
+            const actualPassiveCps = baseCps * boostedMultiplier;
+            const actualTotalCps = actualPassiveCps + clickCps;
+
+            const string1 = apparentTotalCps.toPrecision(4) + ' / ' + actualTotalCps.toPrecision(4)
+            let   string2 = (100 * (apparentTotalCps / totalCps - 1)).toFixed(1) + '% / ' + (100 * (actualTotalCps / totalCps - 1)).toFixed(1) + '%';
+            let   string3 = (100 * clickCps / apparentTotalCps).toFixed(1) + '% / ' + (100 * clickCps / actualTotalCps).toFixed(1) + '%';
+            for (let i=string2.length; i<string1.length; ++i) string2 += ' ';
+            for (let i=string3.length; i<string1.length-3; ++i) string3 += ' ';
+
+            console.log(string1 + ' apparent / actual cookies/second');
+            console.log(string2 + ' apparent / actual wrinkler boost');
+            console.log(string3 + ' of apparent / actual cookie production due to autoclicker');
+        }
+
+        return apparentTotalCps;
+    } else {
+        if (isDefault && trueClicksPerSecond) {
+            console.log(totalCps.toPrecision(4) + ' cookies/second');
+            console.log((100 * clickCps / totalCps).toFixed(1) + '% of cookie production is due to autoclicker');
+        }
+
+        return totalCps;
+    }
 }
 
 function formatSeconds(rawSeconds) {
@@ -553,14 +603,14 @@ function doOrCalculateBestThing(){
 
     // Pop phase 2 wrinklers for drops
     if (['easter', 'halloween'].includes(Game.season)) {
-        for (let i in Game.wrinklers) {
+        for (let i=0; i<Game.getWrinklersMax(); ++i) {
             const wrinkler = Game.wrinklers[i];
             if (wrinkler.phase == 2 && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
         }
     }
     // Pop wrinklers for achievements
     else if (!Game.HasAchiev('Moistburster') || !Game.HasAchiev('Last Chance to See')) {
-        for (let i in Game.wrinklers) {
+        for (let i=0; i<Game.getWrinklersMax(); ++i) {
             const wrinkler = Game.wrinklers[i];
             if (wrinkler.phase && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
         }
@@ -869,6 +919,10 @@ function doOrCalculateBestThing(){
     }
 
     // Pop biggest wrinkler if best purchase is more than an hour out at base Cps, and wrinklers will get there
+    // There's some complicated math to do to check if this is actually worth it
+    // It may be best to just never pop wrinklers until ascension
+    // Also this is bugged anyway because popping a wrinkler will bring us under an hour and we won't finish popping them
+    /*
     if (!Game.buffs.length) {
         let bestWrinkler = -1;
         let bestWrinklerSucked = 0;
@@ -901,6 +955,7 @@ function doOrCalculateBestThing(){
             clog(best);
         }
     }
+    */
 
     // Set price for first building of multi building purchase
     if (best.basePrice) best.price = best.basePrice;
