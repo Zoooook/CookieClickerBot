@@ -958,6 +958,10 @@ function playTheGame() {
     }
 
     now = new Date();
+    while (now - Game.lastClick < 4) now = new Date();
+    ++clickCount;
+    Game.ClickCookie();
+
     const nowSeconds = now.getSeconds();
     if (clickCountFlag && !(nowSeconds%10)) {
         best = {};
@@ -978,9 +982,6 @@ function playTheGame() {
 
         clickCountFlag = 0;
     } else if (!clickCountFlag && nowSeconds%10) clickCountFlag = 1;
-    ++clickCount;
-
-    Game.ClickCookie();
 }
 
 let botInterval;
