@@ -1,6 +1,6 @@
-// keep 2 overlapping click counts
+// take into account wrinkler cps
 // take into account all achievements, upgrade unlocks
-// ascension -- maybe need to take into account longterm expected production, ignore buffs
+// ascension -- maybe need to take into account longterm expected production, ignore buffs, also upgrade unlocks
 // save scum sugar lump harvesting
 
 // math for auras and grandmas
@@ -378,7 +378,7 @@ function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
 function calculateTotalCps(isDefault, args) {
     if (isDefault && trueClicksPerSecond) {
         now = new Date();
-        clicksPerSecond = clickCount*1000/(now-clickCountStart);
+        clicksPerSecond = clickCount * 1000 / (now - clickCountStart);
         console.log('\n');
         console.log(clicksPerSecond.toFixed(1) + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
     }
@@ -389,7 +389,7 @@ function calculateTotalCps(isDefault, args) {
 
     if (isDefault && trueClicksPerSecond) {
         console.log(totalCps.toPrecision(4) + ' cookies/second');
-        console.log((100*clickCps/totalCps).toFixed(1) + '% of cookie production is due to autoclicker');
+        console.log((100 * clickCps / totalCps).toFixed(1) + '% of cookie production is due to autoclicker');
     }
 
     return totalCps;
@@ -397,22 +397,22 @@ function calculateTotalCps(isDefault, args) {
 
 function formatSeconds(rawSeconds) {
     let temp = Math.floor(rawSeconds);
-    const seconds = temp%60;
+    const seconds = temp % 60;
     let timeString = seconds.toString();
 
-    temp = Math.floor(temp/60);
+    temp = Math.floor(temp / 60);
     if (temp) {
         if (seconds < 10) timeString = '0' + timeString;
-        const minutes = temp%60;
+        const minutes = temp % 60;
         timeString = minutes + ':' + timeString;
 
-        temp = Math.floor(temp/60);
+        temp = Math.floor(temp / 60);
         if (temp) {
             if (minutes < 10) timeString = '0' + timeString;
-            const hours = temp%24;
+            const hours = temp % 24;
             timeString = hours + ':' + timeString;
 
-            const days = Math.floor(temp/24);
+            const days = Math.floor(temp / 24);
             if (days) {
                 if (hours < 10) timeString = '0' + timeString;
                 timeString = days + ':' + timeString;
@@ -736,7 +736,7 @@ function doOrCalculateBestThing(){
             for (let i in things) {
                 const thing = things[i];
                 if (thing.name != best.name && thing.price < best.price && !thing.ignore) {
-                    // These are slightly inaccurate for bulk building purchases, it might be a problem
+                    // These are slightly inaccurate for bulk building purchases, it should be good enough though
                     const timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, best.buyCount || 1, args[thing.name])/thing.cps;
                     const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, thing.buyCount || 1, args[best.name])/best.cps;
                     if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) betterThings.push(thing.name);
@@ -914,7 +914,7 @@ function doOrCalculateBestThing(){
 }
 
 function formatTime(date) {
-    return (date.getHours()-1)%12+1 + ':' + ('0' + date.getMinutes()).slice(-2) + ':' + ('0' + date.getSeconds()).slice(-2);
+    return (date.getHours() - 1) % 12 + 1 + ':' + ('0' + date.getMinutes()).slice(-2) + ':' + ('0' + date.getSeconds()).slice(-2);
 }
 
 function playTheGame() {
@@ -958,29 +958,33 @@ function playTheGame() {
 
     now = new Date();
     while (now - Game.lastClick < 4) now = new Date();
-    ++clickCount;
     Game.ClickCookie();
+    ++clickCount;
 
     const nowSeconds = now.getSeconds();
-    if (clickCountFlag && !(nowSeconds%10)) {
+    if (clickCountFlag && !(nowSeconds % 10)) {
         best = {};
 
         if (clickCountStarted) {
-            clicksPerSecond = clickCount*1000/(now-clickCountStart);
+            clicksPerSecond = clickCount * 1000 / (now - clickCountStart);
             trueClicksPerSecond = 1;
 
-            if (!now.getMinutes() && !nowSeconds) {
-                clickCountStart = now;
-                clickCount = 0;
+            if (!(now.getMinutes() % 10) && !nowSeconds) {
+                clickCountStart = clickCountMark;
+                clickCountMark = now;
+                clickCount -= clickCountSaved;
+                clickCountSaved = clickCount;
             }
         } else {
             clickCountStarted = 1;
             clickCountStart = now;
+            clickCountMark = now;
             clickCount = 0;
+            clickCountSaved = 0;
         }
 
         clickCountFlag = 0;
-    } else if (!clickCountFlag && nowSeconds%10) clickCountFlag = 1;
+    } else if (!clickCountFlag && nowSeconds % 10) clickCountFlag = 1;
 }
 
 let botInterval;
@@ -990,10 +994,12 @@ let restoreHeight;
 let now;
 let clickCountFlag;
 let clickCountStart;
+let clickCountMark;
 let clickCountStarted;
-let clicksPerSecond = 150;
+let clicksPerSecond = 200;
 let trueClicksPerSecond;
-let clickCount = 0;
+let clickCount;
+let clickCountSaved;
 const defaultArgs = ['', 0, '', 0, 0, ''];
 let currentCps;
 
