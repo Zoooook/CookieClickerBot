@@ -1,4 +1,3 @@
-// empty line before not after
 // keep 2 overlapping click counts
 // take into account all achievements, upgrade unlocks
 // ascension -- maybe need to take into account longterm expected production, ignore buffs
@@ -195,11 +194,7 @@ function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade) {
     );
 }
 
-function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
-    return clicksPerSecond * calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade);
-}
-
-function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
+function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
     let cookiesPs = 0;
     let mult = 1;
     //add up effect bonuses from building minigames
@@ -376,20 +371,25 @@ function calculateCps(testBuy, testBuyCount, testUpgrade, testAchievement, testS
     return cookiesPs * mult;
 }
 
+function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
+    return clicksPerSecond * calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade);
+}
+
 function calculateTotalCps(isDefault, args) {
     if (isDefault && trueClicksPerSecond) {
         now = new Date();
         clicksPerSecond = clickCount*1000/(now-clickCountStart);
+        console.log('\n');
         console.log(clicksPerSecond.toFixed(1) + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
     }
 
-    const baseCps = calculateCps(...args);
+    const baseCps = calculateBaseCps(...args);
     const clickCps = calculateClickCps(baseCps, ...args);
     const totalCps = baseCps + clickCps;
 
     if (isDefault && trueClicksPerSecond) {
+        console.log(totalCps.toPrecision(4) + ' cookies/second');
         console.log((100*clickCps/totalCps).toFixed(1) + '% of cookie production is due to autoclicker');
-        console.log('\n');
     }
 
     return totalCps;
@@ -546,8 +546,8 @@ function doOrCalculateBestThing(){
 
     // Harvest any ripe sugar lumps
     if (Date.now() - Game.lumpT >= Game.lumpRipeAge) {
-        clog({type: 'sugar', name: 'lump'});
         console.log('\n');
+        clog({type: 'sugar', name: 'lump'});
         Game.clickLump();
     }
 
@@ -570,13 +570,13 @@ function doOrCalculateBestThing(){
     if (Game.Has('A crumbly egg')) {
         if (Game.dragonLevel >= 14 && !Game.hasAura('Dragonflight')) {
             best = {type: 'aura', name: 'Dragonflight', price: 0};
-            clog(best);
             console.log('\n');
+            clog(best);
             return;
         } else if (Game.dragonLevel == 24 && !Game.hasAura('Radiant Appetite')) {
             best = {type: 'aura', name: 'Radiant Appetite', price: 0};
-            clog(best);
             console.log('\n');
+            clog(best);
             return;
         }
     }
@@ -585,6 +585,7 @@ function doOrCalculateBestThing(){
     let things = {};
     let args = {};
     currentCps = calculateTotalCps(1, defaultArgs);
+    console.log('\n');
 
     const hasLovelyCookies = Game.Has(   'Pure heart biscuits') &&
                              Game.Has( 'Ardent heart biscuits') &&
@@ -620,7 +621,6 @@ function doOrCalculateBestThing(){
             best = {type: 'upgrade', name: upgrade.name, percent: 0, value: 0};
             best.price = calculateUpgradePrice(upgrade.name, ...defaultArgs);
             clog(best, 'season');
-            console.log('\n');
             return;
         }
 
@@ -634,7 +634,6 @@ function doOrCalculateBestThing(){
             if (upgradePrice < Game.cookies/1000000) {
                 best = {type: 'upgrade', name: upgrade.name, price: upgradePrice}
                 clog(best, 'cheap');
-                console.log('\n');
                 return;
             } else {
                 args[upgrade.name] = ['', 0, upgrade.name, 0, 0, ''];
@@ -912,8 +911,6 @@ function doOrCalculateBestThing(){
         best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned+Game.cookiesReset)*1000000000};
         clog(best);
     }
-
-    console.log('\n');
 }
 
 function formatTime(date) {
