@@ -1,5 +1,4 @@
 // wait for shiny wrinkler to bite cookie
-// accurate click calculation during cursed finger
 // grab all cheap upgrades at once
 // find out why it's printing cheap upgrades multiple times
 // take into account all achievements, upgrade unlocks
@@ -407,7 +406,8 @@ function calculateTotalCps(isDefault, args) {
         now = new Date();
         clicksPerSecond = clickCount * 1000 / (now - clickCountStart);
         console.log('\n');
-        console.log(clicksPerSecond.toFixed(1) + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
+        if (Object.keys(Game.buffs).length) console.log('   ', Game.buffs);
+        console.log('    ' + clicksPerSecond.toFixed(1) + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
     }
 
     const baseCps = calculateBaseCps(...args);
@@ -426,9 +426,9 @@ function calculateTotalCps(isDefault, args) {
             const actualPassiveCps = baseCps * boostedMultiplier;
             const actualTotalCps = actualPassiveCps + clickCps;
 
-            const string1 = apparentTotalCps.toPrecision(4) + ' / ' + actualTotalCps.toPrecision(4)
-            let   string2 = (100 * (apparentTotalCps / totalCps - 1)).toFixed(1) + '% / ' + (100 * (actualTotalCps / totalCps - 1)).toFixed(1) + '%';
-            let   string3 = (100 * clickCps / apparentTotalCps).toFixed(1) + '% / ' + (100 * clickCps / actualTotalCps).toFixed(1) + '%';
+            const string1 = '    ' + apparentTotalCps.toPrecision(4) + ' / ' + actualTotalCps.toPrecision(4)
+            let   string2 = '    ' + (100 * (apparentTotalCps / totalCps - 1)).toFixed(1) + '% / ' + (100 * (actualTotalCps / totalCps - 1)).toFixed(1) + '%';
+            let   string3 = '    ' + (100 * clickCps / apparentTotalCps).toFixed(1) + '% / ' + (100 * clickCps / actualTotalCps).toFixed(1) + '%';
             for (let i=string2.length; i<string1.length; ++i) string2 += ' ';
             for (let i=string3.length; i<string1.length-3; ++i) string3 += ' ';
 
@@ -440,8 +440,8 @@ function calculateTotalCps(isDefault, args) {
         return apparentTotalCps;
     } else {
         if (isDefault && trueClicksPerSecond) {
-            console.log(totalCps.toPrecision(4) + ' cookies/second');
-            console.log((100 * clickCps / totalCps).toFixed(1) + '% of cookie production is due to autoclicker');
+            console.log('    ' + totalCps.toPrecision(4) + ' cookies/second');
+            console.log('    ' + (100 * clickCps / totalCps).toFixed(1) + '% of cookie production is due to autoclicker');
         }
 
         return totalCps;
