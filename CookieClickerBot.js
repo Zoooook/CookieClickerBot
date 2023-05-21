@@ -1015,7 +1015,7 @@ function playTheGame() {
     }
 
     now = new Date();
-    while (now - Game.lastClick < 4) now = new Date();
+    while (now - Game.lastClick < 20) now = new Date();
     Game.ClickCookie();
     ++clickCount;
 
