@@ -402,12 +402,17 @@ function calculateWrinklerBoostMultiplier() {
 }
 
 function calculateTotalCps(isDefault, args) {
-    if (isDefault && trueClicksPerSecond) {
+    if (trueClicksPerSecond) {
         now = new Date();
         clicksPerSecond = clickCount * 1000 / (now - clickCountStart);
-        console.log('\n');
-        if (Object.keys(Game.buffs).length) console.log('   ', Game.buffs);
-        console.log('    ' + clicksPerSecond.toFixed(1) + ' clicks/second from ' + formatTime(clickCountStart) + ' to ' + formatTime(now));
+
+        if (isDefault) {
+            console.log('\n');
+            if (Object.keys(Game.buffs).length) console.log('   ', Game.buffs);
+            clicksPerSecondShort = clickCountShort * 1000 / (now - clickCountShortStart);
+            console.log('    ' + clicksPerSecondShort.toFixed(1) + ' clicks/second from ' + formatTime(clickCountShortStart) + ' to ' + formatTime(now));
+            console.log('    ' + clicksPerSecond.toFixed(1) + ' clicks/second from ' + formatTime(clickCountStart) + ' to ' + formatTime(now));
+        }
     }
 
     const baseCps = calculateBaseCps(...args);
@@ -1019,13 +1024,13 @@ function playTheGame() {
     now = new Date();
     Game.ClickCookie();
     ++clickCount;
+    ++clickCountShort;
 
     const nowSeconds = now.getSeconds();
     if (clickCountFlag && !(nowSeconds % 10)) {
         best = {};
 
         if (clickCountStarted) {
-            clicksPerSecond = clickCount * 1000 / (now - clickCountStart);
             trueClicksPerSecond = 1;
 
             if (!(now.getMinutes() % 30) && !nowSeconds) {
@@ -1034,6 +1039,12 @@ function playTheGame() {
                 clickCount -= clickCountSaved;
                 clickCountSaved = clickCount;
             }
+
+            clickCountShortStart = clickCountShortMark;
+            clickCountShortMark = now;
+            clickCountShort -= clickCountShortSaved;
+            clickCountShortSaved = clickCountShort;
+
         } else resetClickCount();
 
         clickCountFlag = 0;
@@ -1053,6 +1064,10 @@ let clicksPerSecond = 200;
 let trueClicksPerSecond;
 let clickCount;
 let clickCountSaved;
+let clickCountShortStart;
+let clickCountShortMark;
+let clickCountShort;
+let clickCountShortSaved;
 const defaultArgs = ['', 0, '', 0, 0, ''];
 let currentCps;
 
@@ -1081,10 +1096,16 @@ function initialize() {
 
 function resetClickCount() {
     clickCountStarted = 1;
+
     clickCountStart = now;
     clickCountMark = now;
     clickCount = 0;
     clickCountSaved = 0;
+
+    clickCountShortStart = now;
+    clickCountShortMark = now;
+    clickCountShort = 0;
+    clickCountShortSaved = 0;
 }
 
 function start() {
