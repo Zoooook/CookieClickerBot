@@ -1017,7 +1017,6 @@ function playTheGame() {
     }
 
     now = new Date();
-    while (now - Game.lastClick < 4) now = new Date();
     Game.ClickCookie();
     ++clickCount;
 
@@ -1064,6 +1063,14 @@ const defaultArgs = ['', 0, '', 0, 0, ''];
 let currentCps;
 
 function initialize() {
+    Game.ClickCookie = new Function(
+        'e',
+        'amount',
+        Game.ClickCookie.toString()
+            .replace(/^function\(e,amount\)\n\t\t\{/, '')
+            .replace(':1)===0?3:50))', ':1)===0?3:1001))')
+            .replace(/\}$/,''),
+    ); // Remove autoclick rate limiter
     Game.Win('Cheated cookies taste awful');
     Game.Win('Third-party');
     Game.ClickTinyCookie();
