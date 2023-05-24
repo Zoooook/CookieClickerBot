@@ -1072,6 +1072,18 @@ const defaultArgs = ['', 0, '', 0, 0, ''];
 let currentCps;
 
 function initialize() {
+    Game.volume = 0;
+    Game.prefs.fancy = 0;
+    Game.prefs.filters = 0;
+    Game.prefs.particles = 0;
+    Game.prefs.numbers = 1;
+    Game.prefs.milk = 0;
+    Game.prefs.cursors = 0;
+    Game.prefs.wobbly = 0;
+    Game.prefs.monospace = 1;
+    Game.prefs.format = 0;
+    Game.prefs.notScary = 1;
+
     Game.ClickCookie = new Function(
         'e',
         'amount',
