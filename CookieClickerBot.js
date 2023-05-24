@@ -407,7 +407,7 @@ function calculateTotalCps(isDefault, args) {
         clicksPerSecond = clickCount * 1000 / (now - clickCountStart);
         console.log('\n');
         if (Object.keys(Game.buffs).length) console.log('   ', Game.buffs);
-        console.log('    ' + clicksPerSecond.toFixed(1) + ' clicks/second at ' + formatTime(now) + ' since ' + formatTime(clickCountStart));
+        console.log('    ' + clicksPerSecond.toFixed(1) + ' clicks/second from ' + formatTime(clickCountStart) + ' to ' + formatTime(now));
     }
 
     const baseCps = calculateBaseCps(...args);
@@ -1028,19 +1028,13 @@ function playTheGame() {
             clicksPerSecond = clickCount * 1000 / (now - clickCountStart);
             trueClicksPerSecond = 1;
 
-            if (!(now.getMinutes() % 10) && !nowSeconds) {
+            if (!(now.getMinutes() % 30) && !nowSeconds) {
                 clickCountStart = clickCountMark;
                 clickCountMark = now;
                 clickCount -= clickCountSaved;
                 clickCountSaved = clickCount;
             }
-        } else {
-            clickCountStarted = 1;
-            clickCountStart = now;
-            clickCountMark = now;
-            clickCount = 0;
-            clickCountSaved = 0;
-        }
+        } else resetClickCount();
 
         clickCountFlag = 0;
     } else if (!clickCountFlag && nowSeconds % 10) clickCountFlag = 1;
@@ -1083,6 +1077,14 @@ function initialize() {
         restoreHeight = Game.LeftBackground.canvas.height;
         Game.LeftBackground.canvas.height = 0;
     }
+}
+
+function resetClickCount() {
+    clickCountStarted = 1;
+    clickCountStart = now;
+    clickCountMark = now;
+    clickCount = 0;
+    clickCountSaved = 0;
 }
 
 function start() {
