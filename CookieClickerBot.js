@@ -661,6 +661,8 @@ function doOrCalculateBestThing(){
     for (let i in Game.UpgradesInStore) {
         const upgrade = Game.UpgradesInStore[i];
 
+        if (upgrade.bought > 0) continue;
+
         if (upgrade.name == 'Chocolate egg' && !upgrade.isVaulted()) upgrade.vault();
 
         // Activate optimal season
