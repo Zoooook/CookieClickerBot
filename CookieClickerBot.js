@@ -1006,7 +1006,7 @@ function playTheGame() {
         } else if (best.type == 'wrinkler') Game.wrinklers[Number(best.name)].hp = -10;
 
         best = {};
-    } else if(Game.shimmers.length && (Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) Game.shimmers[0].pop();
+    } else if(Game.shimmers.length && (!Game.HasAchiev('Early bird') || Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) Game.shimmers[0].pop();
     else if (!best.name) {
         if (restoreHeight && Game.HasAchiev('Cookie-dunker')) {
             Game.LeftBackground.canvas.height = restoreHeight;
