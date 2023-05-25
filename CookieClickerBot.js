@@ -566,13 +566,13 @@ function calculatePrice(type, name, buyCount, args) {
 
         if (name == 'dragon') {
             let price = 0;
-            if (Game.dragonLevel < 22) {
+            if (Game.dragonLevel < Game.dragonLevels.length - 3) {
                 // overloading buyCount as buildingIndex for dragon, bad practice but whatever
                 price = Game.ObjectsById[buyCount].price * 20/3;
                 for(let i=Game.dragonLevel; i<5; ++i) price += 1000000*Math.pow(2, i);
             } else {
                 price = calculateTotalBuildingCost(args);
-                if (Game.dragonLevel == 22) price += calculateUpgradePrice(Game.Upgrades['Dragon cookie'].name, ...args);
+                if (Game.dragonLevel == Game.dragonLevels.length - 3) price += calculateUpgradePrice(Game.Upgrades['Dragon cookie'].name, ...args);
             }
 
             return price;
@@ -641,7 +641,7 @@ function doOrCalculateBestThing(){
             console.log('\n');
             clog(best);
             return;
-        } else if (Game.dragonLevel == 24 && !Game.hasAura('Radiant Appetite')) {
+        } else if (Game.dragonLevel == Game.dragonLevels.length - 1 && !Game.hasAura('Radiant Appetite')) {
             best = {type: 'aura', name: 'Radiant Appetite', price: 0};
             console.log('\n');
             clog(best);
@@ -862,17 +862,17 @@ function doOrCalculateBestThing(){
     }
 
     // Override best purchase with dragon upgrades
-    if (Game.Has('A crumbly egg') && Game.dragonLevel < 24 && Game.dragonLevels[Math.max(Game.dragonLevel,5)].cost()) {
+    if (Game.Has('A crumbly egg') && Game.dragonLevel < Game.dragonLevels.length - 1 && Game.dragonLevels[Math.max(Game.dragonLevel,5)].cost()) {
         things.dragon = {type: 'upgrade', name: 'dragon'};
 
-        const buildingIndex = Math.max(Game.dragonLevel-5,0);
+        const buildingIndex = Math.max(Game.dragonLevel - 5, 0);
         things.dragon.price = calculatePrice('upgrade', 'dragon', buildingIndex, defaultArgs);
 
         if (!best.name) {
             best = things.dragon;
             clog(best, 'best');
         // Sacrifice buildings before buying any more of them
-        } else if (Game.dragonLevel < 21) {
+        } else if (Game.dragonLevel < Game.dragonLevels.length - 4) {
             if (Game.dragonLevel == 13 || best.type == 'building' && (
                 best.name == Game.ObjectsById[buildingIndex].name ||
                 best.name == Game.ObjectsById[buildingIndex+1].name && Game.ObjectsById[buildingIndex+1].amount >= 100
@@ -885,10 +885,10 @@ function doOrCalculateBestThing(){
                 best = things.dragon;
                 clog(best, 'override');
             // Override upgrade purchases if dragon is better
-            } else if (Game.dragonLevel > 21) {
+            } else if (Game.dragonLevel > Game.dragonLevels.length - 4) {
                 args.dragon = ['', 0, '', 0, 0, ''];
-                if      (Game.dragonLevel == 22) args.dragon[2] = 'Dragon cookie';
-                else if (Game.dragonLevel == 23) args.dragon[5] = 'Radiant Appetite';
+                if      (Game.dragonLevel == Game.dragonLevels.length - 3) args.dragon[2] = 'Dragon cookie';
+                else if (Game.dragonLevel == Game.dragonLevels.length - 2) args.dragon[5] = 'Radiant Appetite';
 
                 things.dragon.cps = calculateTotalCps(0, args.dragon);
                 things.dragon.percent = (things.dragon.cps / currentCps - 1) * 100;
