@@ -403,7 +403,6 @@ function calculateWrinklerBoostMultiplier() {
 
 function calculateTotalCps(isDefault, args) {
     if (trueClicksPerSecond) {
-        now = new Date();
         clicksPerSecond = clickCount * 1000 / (now - clickCountStart);
 
         if (isDefault) {
@@ -993,7 +992,7 @@ function formatTime(date) {
 }
 
 function playTheGame() {
-    if (buyThings && best.name && Game.cookies >= best.price) {
+    if (autoBuyer && best.name && Game.cookies >= best.price) {
         if (best.type == 'building'){
             if (best.price < Game.cookies/1000000) Game.Objects[best.name].buy(50);
             else if (best.price < Game.cookies/1000) Game.Objects[best.name].buy(10);
@@ -1020,7 +1019,7 @@ function playTheGame() {
         else if (best.type == 'sell') Game.Objects[best.name].sell(1);
 
         best = {};
-    } else if(autoClicker && Game.shimmers.length && (!Game.HasAchiev('Early bird') || Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) Game.shimmers[0].pop();
+    } else if (autoClicker && Game.shimmers.length && (!Game.HasAchiev('Early bird') || Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) Game.shimmers[0].pop();
     else if (!best.name) {
         if (restoreHeight && Game.HasAchiev('Cookie-dunker')) {
             Game.LeftBackground.canvas.height = restoreHeight;
@@ -1066,9 +1065,12 @@ function playTheGame() {
     }
 }
 
+let gameAscend = Game.Ascend;
+let gameReincarnate = Game.Reincarnate;
+let insertedAscendHooks;
 let botInterval;
 let best;
-let buyThings = 1;
+let autoBuyer = 1;
 let restoreHeight;
 let now;
 let autoClicker;
@@ -1089,7 +1091,7 @@ let clickCountShortSaved;
 const defaultArgs = ['', 0, '', 0, 0, ''];
 let currentCps;
 
-function initialize() {
+function initializeAutoClicker() {
     Game.volume = 0;
     Game.prefs.fancy = 0;
     Game.prefs.filters = 0;
@@ -1127,6 +1129,7 @@ function initialize() {
 }
 
 function resetClickCount() {
+    now = new Date();
     clickCountStarted = 1;
 
     clickCountStart = now;
@@ -1142,6 +1145,24 @@ function resetClickCount() {
 
 function start(autoClick, autoBuy) {
     Game.Win('Third-party');
+
+    if (!insertedAscendHooks) {
+        Game.Ascend = function(bypass) {
+            if (bypass) {
+                stop();
+                console.log('\nAscending, bot paused');
+            }
+            gameAscend(bypass);
+        }
+        Game.Reincarnate = function(bypass) {
+            gameReincarnate(bypass);
+            if (bypass) {
+                console.log('\nReincarnating, bot started');
+                start(autoClicker, autoBuyer);
+            }
+        }
+        insertedAscendHooks = 1
+    }
 
     best = {};
     recalculate = 1;
@@ -1161,7 +1182,7 @@ function startClicking() {
     clicksPerSecond = 200;
     trueClicksPerSecond = 0;
     resetClickCount();
-    initialize();
+    initializeAutoClicker();
 }
 
 function stopClicking() {
@@ -1171,11 +1192,11 @@ function stopClicking() {
 }
 
 function startBuying() {
-    buyThings = 1;
+    autoBuyer = 1;
 }
 
 function stopBuying() {
-    buyThings = 0;
+    autoBuyer = 0;
 }
 
 function stop() {
