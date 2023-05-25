@@ -734,14 +734,11 @@ function doOrCalculateBestThing(){
 
         // Check tiered achievements
         for (let j in building.tieredAchievs) {
-            if (Game.Tiers[j].achievUnlock > building.amount) {
-                if (!Game.HasAchiev(building.tieredAchievs[j].name)) {
-                    const buyCount = Game.Tiers[j].achievUnlock - building.amount;
-                    const thingKey = building.name + ' Tier';
-                    args[thingKey] = [building.name, buyCount, '', 1, 0, 0];
-                    things[thingKey] = createMultiBuildingThing(args[thingKey]);
-                }
-
+            if (!Game.HasAchiev(building.tieredAchievs[j].name)) {
+                const buyCount = Game.Tiers[j].achievUnlock - building.amount;
+                const thingKey = building.name + ' Tier';
+                args[thingKey] = [building.name, buyCount, '', 1, 0, 0];
+                things[thingKey] = createMultiBuildingThing(args[thingKey]);
                 break;
             }
         }
@@ -749,25 +746,26 @@ function doOrCalculateBestThing(){
         // Cursor doesn't use tiered achievements :(
         if (building.name == 'Cursor') {
             const cursorAchievements = [
-                {achievUnlock: 1,   name: 'Click'},
-                {achievUnlock: 2,   name: 'Double-click'},
-                {achievUnlock: 50,  name: 'Mouse wheel'},
-                {achievUnlock: 100, name: 'Of Mice and Men'},
-                {achievUnlock: 200, name: 'The Digital'},
-                {achievUnlock: 300, name: 'Extreme polydactyly'},
-                {achievUnlock: 400, name: 'Dr. T'},
-                {achievUnlock: 500, name: 'Thumbs, phalanges, metacarpals'},
-                {achievUnlock: 600, name: 'With her finger and her thumb'},
+                {achievUnlock:    1, name: 'Click'},
+                {achievUnlock:    2, name: 'Double-click'},
+                {achievUnlock:   50, name: 'Mouse wheel'},
+                {achievUnlock:  100, name: 'Of Mice and Men'},
+                {achievUnlock:  200, name: 'The Digital'},
+                {achievUnlock:  300, name: 'Extreme polydactyly'},
+                {achievUnlock:  400, name: 'Dr. T'},
+                {achievUnlock:  500, name: 'Thumbs, phalanges, metacarpals'},
+                {achievUnlock:  600, name: 'With her finger and her thumb'},
+                {achievUnlock:  700, name: 'Gotta hand it to you'},
+                {achievUnlock:  800, name: 'The devil\'s workshop'},
+                {achievUnlock:  900, name: 'All on deck'},
+                {achievUnlock: 1000, name: 'A round of applause'},
             ];
 
             for (let j in cursorAchievements) {
-                if (cursorAchievements[j].achievUnlock > building.amount) {
-                    if (!Game.HasAchiev(cursorAchievements[j].name)) {
-                        const buyCount = cursorAchievements[j].achievUnlock - building.amount;
-                        args['Cursor Tier'] = [building.name, buyCount, '', 1, 0, 0];
-                        things['Cursor Tier'] = createMultiBuildingThing(args['Cursor Tier']);
-                    }
-
+                if (!Game.HasAchiev(cursorAchievements[j].name)) {
+                    const buyCount = cursorAchievements[j].achievUnlock - building.amount;
+                    args['Cursor Tier'] = [building.name, buyCount, '', 1, 0, 0];
+                    things['Cursor Tier'] = createMultiBuildingThing(args['Cursor Tier']);
                     break;
                 }
             }
