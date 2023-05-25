@@ -489,7 +489,7 @@ function clog(thing, message) {
     if (thing.percent) message += ', +' + thing.percent.toPrecision(4) + '%';
     if (thing.price) message += ', $' + thing.price.toPrecision(4);
     if (thing.value) message += ', value: ' + thing.value.toPrecision(4);
-    if (trueClicksPerSecond && thing.price && Game.cookies < thing.price) message += ', T-' + formatSeconds((thing.price - Game.cookies) / currentCps);
+    if (thing.price && Game.cookies < thing.price) message += ', T-' + formatSeconds((thing.price - Game.cookies) / currentCps);
     console.log(message);
 }
 
@@ -599,29 +599,40 @@ function createMultiBuildingThing(args) {
 }
 
 function doOrCalculateBestThing(){
-    // Click fortunes
-    if (Game.TickerEffect.type=='fortune') Game.tickerL.click();
+    currentCps = calculateTotalCps(1, defaultArgs);
 
-    // Harvest any ripe sugar lumps
-    if (Date.now() - Game.lumpT >= Game.lumpRipeAge) {
-        console.log('\n');
-        clog({type: 'sugar', name: 'lump'});
-        Game.clickLump();
-    }
+    if (autoClicker) {
+        // Click fortunes
+        if (Game.TickerEffect.type=='fortune') Game.tickerL.click();
 
-    // Pop phase 2 wrinklers for drops
-    if (['easter', 'halloween'].includes(Game.season)) {
-        for (let i=0; i<Game.getWrinklersMax(); ++i) {
-            const wrinkler = Game.wrinklers[i];
-            if (wrinkler.phase == 2 && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
+        // Harvest any ripe sugar lumps
+        if (Date.now() - Game.lumpT >= Game.lumpRipeAge) {
+            console.log('\n');
+            clog({type: 'sugar', name: 'lump'});
+            Game.clickLump();
+        }
+
+        // Pop phase 2 wrinklers for drops
+        if (['easter', 'halloween'].includes(Game.season)) {
+            for (let i=0; i<Game.getWrinklersMax(); ++i) {
+                const wrinkler = Game.wrinklers[i];
+                if (wrinkler.phase == 2 && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
+            }
+        }
+        // Pop wrinklers for achievements
+        else if (!Game.HasAchiev('Moistburster') || !Game.HasAchiev('Last Chance to See')) {
+            for (let i=0; i<Game.getWrinklersMax(); ++i) {
+                const wrinkler = Game.wrinklers[i];
+                if (wrinkler.phase && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
+            }
         }
     }
-    // Pop wrinklers for achievements
-    else if (!Game.HasAchiev('Moistburster') || !Game.HasAchiev('Last Chance to See')) {
-        for (let i=0; i<Game.getWrinklersMax(); ++i) {
-            const wrinkler = Game.wrinklers[i];
-            if (wrinkler.phase && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
-        }
+
+    // Wait to sell grandma until we can buy her back
+    if (!Game.HasAchiev('Just wrong') && Game.Objects['Grandma'].amount) {
+        best = {type: 'sell', name: 'Grandma', price: Math.ceil(Game.Objects['Grandma'].price*15/23)}
+        clog(best);
+        return;
     }
 
     // Set aura (sacrifice a building) before any more buildings are built
@@ -642,7 +653,6 @@ function doOrCalculateBestThing(){
     // Start best purchase calculation
     let things = {};
     let args = {};
-    currentCps = calculateTotalCps(1, defaultArgs);
     console.log('\n');
 
     const hasLovelyCookies = Game.Has(   'Pure heart biscuits') &&
@@ -650,7 +660,8 @@ function doOrCalculateBestThing(){
                              Game.Has(   'Sour heart biscuits') &&
                              Game.Has('Weeping heart biscuits') &&
                              Game.Has( 'Golden heart biscuits') &&
-                             Game.Has('Eternal heart biscuits');
+                             Game.Has('Eternal heart biscuits') &&
+                             Game.Has(  'Prism heart biscuits');
     const hasSpookyCookies = Game.Has(  'Skull cookies') &&
                              Game.Has(  'Ghost cookies') &&
                              Game.Has(    'Bat cookies') &&
@@ -671,13 +682,13 @@ function doOrCalculateBestThing(){
         if (upgrade.name == 'Chocolate egg' && !upgrade.isVaulted()) upgrade.vault();
 
         // Activate optimal season
-        else if (
+        else if (autoClicker && (
             upgrade.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                           && Game.santaLevel  < 14 && Game.Has(  'Titanium mouse') ||
             upgrade.name == 'Lovesick biscuit' && Game.season != 'valentines'                                   && !hasLovelyCookies && Game.santaLevel == 14 && Game.Has('Fantasteel mouse') ||
             upgrade.name ==    'Bunny biscuit' && Game.season != 'easter'                         && eggs  < 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
             upgrade.name ==  'Ghostly biscuit' && Game.season != 'halloween' && !hasSpookyCookies && eggs == 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
             upgrade.name ==  'Festive biscuit' && Game.season != 'christmas' &&  hasSpookyCookies && eggs == 20 &&  hasLovelyCookies
-        ) {
+        )) {
             best = {type: 'upgrade', name: upgrade.name, percent: 0, value: 0};
             best.price = calculateUpgradePrice(upgrade.name, ...defaultArgs);
             clog(best, 'season');
@@ -708,7 +719,6 @@ function doOrCalculateBestThing(){
             upgrade.name == 'Elder Covenant' && Game.Upgrades['Elder Pledge'].unlocked==0 ||
             upgrade.name == 'Revoke Elder Covenant'
         ) things[upgrade.name] = {type: 'upgrade', name: upgrade.name, price: calculateUpgradePrice(upgrade.name, ...defaultArgs), ignore: 1};
-
     }
 
     for (let i in Game.Objects) {
@@ -983,13 +993,11 @@ function formatTime(date) {
 }
 
 function playTheGame() {
-    if (best.name && buyThings && Game.cookies > best.price) {
+    if (buyThings && best.name && Game.cookies >= best.price) {
         if (best.type == 'building'){
             if (best.price < Game.cookies/1000000) Game.Objects[best.name].buy(50);
             else if (best.price < Game.cookies/1000) Game.Objects[best.name].buy(10);
             else Game.Objects[best.name].buy(1);
-
-            if (!Game.HasAchiev('Just wrong')) Game.Objects['Grandma'].sell(1);
         } else if (best.type == 'upgrade') {
             if (['santa', 'dragon'].includes(best.name)) {
                 Game.specialTab = best.name;
@@ -1009,9 +1017,10 @@ function playTheGame() {
             if      (best.name == 'Dragonflight')     Game.dragonAura=10;
             else if (best.name == 'Radiant Appetite') Game.dragonAura2=15;
         } else if (best.type == 'wrinkler') Game.wrinklers[Number(best.name)].hp = -10;
+        else if (best.type == 'sell') Game.Objects[best.name].sell(1);
 
         best = {};
-    } else if(Game.shimmers.length && (!Game.HasAchiev('Early bird') || Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) Game.shimmers[0].pop();
+    } else if(autoClicker && Game.shimmers.length && (!Game.HasAchiev('Early bird') || Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) Game.shimmers[0].pop();
     else if (!best.name) {
         if (restoreHeight && Game.HasAchiev('Cookie-dunker')) {
             Game.LeftBackground.canvas.height = restoreHeight;
@@ -1022,33 +1031,39 @@ function playTheGame() {
     }
 
     now = new Date();
-    Game.ClickCookie();
-    ++clickCount;
-    ++clickCountShort;
-
     const nowSeconds = now.getSeconds();
-    if (clickCountFlag && !(nowSeconds % 10)) {
+
+    if (recalculate && !(nowSeconds % 10)) {
         best = {};
+        recalculate = 0;
+    } else if (!recalculate && nowSeconds % 10) recalculate = 1;
 
-        if (clickCountStarted) {
-            trueClicksPerSecond = 1;
+    if (autoClicker) {
+        Game.ClickCookie();
+        ++clickCount;
+        ++clickCountShort;
 
-            if (!(now.getMinutes() % 30) && !nowSeconds) {
-                clickCountStart = clickCountMark;
-                clickCountMark = now;
-                clickCount -= clickCountSaved;
-                clickCountSaved = clickCount;
-            }
+        if (clickCountFlag && !(nowSeconds % 10)) {
+            if (clickCountStarted) {
+                trueClicksPerSecond = 1;
 
-            clickCountShortStart = clickCountShortMark;
-            clickCountShortMark = now;
-            clickCountShort -= clickCountShortSaved;
-            clickCountShortSaved = clickCountShort;
+                if (!(now.getMinutes() % 30) && !nowSeconds) {
+                    clickCountStart = clickCountMark;
+                    clickCountMark = now;
+                    clickCount -= clickCountSaved;
+                    clickCountSaved = clickCount;
+                }
 
-        } else resetClickCount();
+                clickCountShortStart = clickCountShortMark;
+                clickCountShortMark = now;
+                clickCountShort -= clickCountShortSaved;
+                clickCountShortSaved = clickCountShort;
 
-        clickCountFlag = 0;
-    } else if (!clickCountFlag && nowSeconds % 10) clickCountFlag = 1;
+            } else resetClickCount();
+
+            clickCountFlag = 0;
+        } else if (!clickCountFlag && nowSeconds % 10) clickCountFlag = 1;
+    }
 }
 
 let botInterval;
@@ -1056,11 +1071,14 @@ let best;
 let buyThings = 1;
 let restoreHeight;
 let now;
+let autoClicker;
+let removedRateLimiter;
+let recalculate;
 let clickCountFlag;
 let clickCountStart;
 let clickCountMark;
 let clickCountStarted;
-let clicksPerSecond = 200;
+let clicksPerSecond;
 let trueClicksPerSecond;
 let clickCount;
 let clickCountSaved;
@@ -1084,16 +1102,18 @@ function initialize() {
     Game.prefs.format = 0;
     Game.prefs.notScary = 1;
 
-    Game.ClickCookie = new Function(
-        'e',
-        'amount',
-        Game.ClickCookie.toString()
-            .replace(/^function\(e,amount\)\n\t\t\{/, '')
-            .replace(':1)===0?3:50))', ':1)===0?3:1001))')
-            .replace(/\}$/,''),
-    ); // Remove autoclick rate limiter
+    if (!removedRateLimiter) {
+        Game.ClickCookie = new Function(
+            'e',
+            'amount',
+            Game.ClickCookie.toString()
+                .replace(/^function\(e,amount\)\n\t\t\{/, '')
+                .replace(':1)===0?3:50))', ':1)===0?3:1001))')
+                .replace(/\}$/,''),
+        );
+        removedRateLimiter = 1;
+    }
     Game.Win('Cheated cookies taste awful');
-    Game.Win('Third-party');
     Game.ClickTinyCookie();
     Game.bakeryNameSet('orteil');
     Game.bakeryNameSet('Zookbot');
@@ -1120,14 +1140,34 @@ function resetClickCount() {
     clickCountShortSaved = 0;
 }
 
-function start() {
+function start(autoClick, autoBuy) {
+    Game.Win('Third-party');
+
     best = {};
+    recalculate = 1;
     clickCountStarted = 0;
     clickCountFlag = 1;
-    trueClicksPerSecond = 0;
 
     stop();
+    if (autoClick) startClicking();
+    else stopClicking();
+    if (autoBuy) startBuying();
+    else stopBuying();
     botInterval = setInterval(playTheGame);
+}
+
+function startClicking() {
+    autoClicker = 1;
+    clicksPerSecond = 200;
+    trueClicksPerSecond = 0;
+    resetClickCount();
+    initialize();
+}
+
+function stopClicking() {
+    autoClicker = 0;
+    clicksPerSecond = 0;
+    trueClicksPerSecond = 0;
 }
 
 function startBuying() {
@@ -1142,5 +1182,4 @@ function stop() {
     clearInterval(botInterval);
 }
 
-initialize();
-start();
+start(0, 0);
