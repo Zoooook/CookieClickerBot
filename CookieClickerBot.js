@@ -40,18 +40,26 @@ function calculateTieredCpsMult(me, testBuy, testBuyCount, testUpgrade) {
     return mult;
 }
 
-function calculateCursorCps(testBuy, testBuyCount, testUpgrade) {
+function calculateCursorBaseCps(testUpgrade) {
     let add = 0;
     if (willHave(   'Thousand fingers', testUpgrade)) add += 0.1;
-    if (willHave(    'Million fingers', testUpgrade)) add += 0.5;
-    if (willHave(    'Billion fingers', testUpgrade)) add += 5;
-    if (willHave(   'Trillion fingers', testUpgrade)) add += 50;
-    if (willHave('Quadrillion fingers', testUpgrade)) add += 500;
-    if (willHave('Quintillion fingers', testUpgrade)) add += 5000;
-    if (willHave( 'Sextillion fingers', testUpgrade)) add += 50000;
-    if (willHave( 'Septillion fingers', testUpgrade)) add += 500000;
-    if (willHave(  'Octillion fingers', testUpgrade)) add += 5000000;
+    if (willHave(    'Million fingers', testUpgrade)) add *= 5;
+    if (willHave(    'Billion fingers', testUpgrade)) add *= 10;
+    if (willHave(   'Trillion fingers', testUpgrade)) add *= 20;
+    if (willHave('Quadrillion fingers', testUpgrade)) add *= 20;
+    if (willHave('Quintillion fingers', testUpgrade)) add *= 20;
+    if (willHave( 'Sextillion fingers', testUpgrade)) add *= 20;
+    if (willHave( 'Septillion fingers', testUpgrade)) add *= 20;
+    if (willHave(  'Octillion fingers', testUpgrade)) add *= 20;
+    if (willHave(  'Nonillion fingers', testUpgrade)) add *= 20;
+    if (willHave(  'Decillion fingers', testUpgrade)) add *= 20;
+    if (willHave('Undecillion fingers', testUpgrade)) add *= 20;
+    if (willHave( 'Unshackled cursors', testUpgrade)) add *= 25;
+    return add;
+}
 
+function calculateCursorCps(testBuy, testBuyCount, testUpgrade) {
+    let add = calculateCursorBaseCps(testUpgrade);
     let num = 0;
     for (let i in Game.Objects) {
         if (Game.Objects[i].name != 'Cursor') num += amount(Game.Objects[i], testBuy, testBuyCount);
@@ -240,6 +248,8 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
     if (willHave('Kitten marketeers',                         testUpgrade)) catMult *= (1 + milkProgress * 0.15  * milkMult);
     if (willHave('Kitten analysts',                           testUpgrade)) catMult *= (1 + milkProgress * 0.125 * milkMult);
     if (willHave('Kitten executives',                         testUpgrade)) catMult *= (1 + milkProgress * 0.115 * milkMult);
+    if (willHave('Kitten admins',                             testUpgrade)) catMult *= (1 + milkProgress * 0.11  * milkMult);
+    if (willHave('Kitten strategists',                        testUpgrade)) catMult *= (1 + milkProgress * 0.105 * milkMult);
     if (willHave('Kitten angels',                             testUpgrade)) catMult *= (1 + milkProgress * 0.1   * milkMult);
     if (willHave('Fortune #103',                              testUpgrade)) catMult *= (1 + milkProgress * 0.05  * milkMult);
 
@@ -305,16 +315,7 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
 function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade) {
     if (Game.hasBuff('Cursed finger')) return Game.buffs['Cursed finger'].power;
 
-    let add = 0;
-    if (willHave(   'Thousand fingers', testUpgrade)) add += 0.1;
-    if (willHave(    'Million fingers', testUpgrade)) add += 0.5;
-    if (willHave(    'Billion fingers', testUpgrade)) add += 5;
-    if (willHave(   'Trillion fingers', testUpgrade)) add += 50;
-    if (willHave('Quadrillion fingers', testUpgrade)) add += 500;
-    if (willHave('Quintillion fingers', testUpgrade)) add += 5000;
-    if (willHave( 'Sextillion fingers', testUpgrade)) add += 50000;
-    if (willHave( 'Septillion fingers', testUpgrade)) add += 500000;
-    if (willHave(  'Octillion fingers', testUpgrade)) add += 5000000;
+    let add = calculateCursorBaseCps(testUpgrade);
     let num = 0;
     for (let i in Game.Objects) {
         num += amount(Game.Objects[i], testBuy, testBuyCount);
@@ -334,12 +335,16 @@ function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade) {
     if (willHave(    'Armythril mouse', testUpgrade)) add += cookiesPs*0.01;
     if (willHave('Technobsidian mouse', testUpgrade)) add += cookiesPs*0.01;
     if (willHave(   'Plasmarble mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(   'Miraculite mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(    'Aetherice mouse', testUpgrade)) add += cookiesPs*0.01;
+    if (willHave(    'Omniplast mouse', testUpgrade)) add += cookiesPs*0.01;
     if (willHave('Fortune #104',        testUpgrade)) add += cookiesPs*0.01;
 
     let mult = 1;
     if (willHave('Santa\'s helpers', testUpgrade)) mult *= 1.1;
     if (willHave('Cookie egg',       testUpgrade)) mult *= 1.1;
     if (willHave('Halo gloves',      testUpgrade)) mult *= 1.1;
+    if (willHave('Dragon claw',      testUpgrade)) mult *= 1.03;
     mult *= Game.eff('click');
 
     if (Game.hasGod) {
@@ -682,7 +687,7 @@ function doOrCalculateBestThing(){
 
         // Activate optimal season
         else if (autoClicker && (
-            upgrade.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                           && Game.santaLevel  < 14 && Game.Has(  'Titanium mouse') ||
+            upgrade.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                           && Game.santaLevel  < 14 && Game.Has('Titanium mouse') ||
             upgrade.name == 'Lovesick biscuit' && Game.season != 'valentines'                                   && !hasLovelyCookies && Game.santaLevel == 14 && Game.Has('Fantasteel mouse') ||
             upgrade.name ==    'Bunny biscuit' && Game.season != 'easter'                         && eggs  < 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
             upgrade.name ==  'Ghostly biscuit' && Game.season != 'halloween' && !hasSpookyCookies && eggs == 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
