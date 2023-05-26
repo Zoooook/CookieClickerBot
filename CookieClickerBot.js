@@ -1,3 +1,8 @@
+// elder batallion instead of radiant appetite
+// big upgrades switch dragon aura to master of the armory
+// print shimmer clicks, wrinklers
+// cheap upgrades by time not bank
+
 // wait for shiny wrinkler to bite cookie
 // grab all cheap upgrades at once
 // find out why it's printing cheap upgrades multiple times
@@ -640,7 +645,7 @@ function doOrCalculateBestThing(){
     }
 
     // Set aura (sacrifice a building) before any more buildings are built
-    if (Game.Has('A crumbly egg')) {
+    if (autoClicker && Game.Has('A crumbly egg')) {
         if (Game.dragonLevel >= 14 && !Game.hasAura('Dragonflight')) {
             best = {type: 'aura', name: 'Dragonflight', price: 0};
             console.log('\n');
