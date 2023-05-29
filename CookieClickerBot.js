@@ -2,6 +2,7 @@
 // big upgrades switch dragon aura to master of the armory
 // print shimmer clicks, wrinklers
 // cheap upgrades by time not bank
+// print ordered list of upgrades by value
 
 // wait for shiny wrinkler to bite cookie
 // grab all cheap upgrades at once
@@ -1157,7 +1158,7 @@ function start(autoClick, autoBuy) {
     if (!insertedAscendHooks) {
         Game.Ascend = function(bypass) {
             if (bypass) {
-                stop();
+                pause();
                 console.log('\nAscending, bot paused');
             }
             gameAscend(bypass);
@@ -1177,12 +1178,16 @@ function start(autoClick, autoBuy) {
     clickCountStarted = 0;
     clickCountFlag = 1;
 
-    stop();
+    pause();
     if (autoClick) startClicking();
     else stopClicking();
     if (autoBuy) startBuying();
     else stopBuying();
     botInterval = setInterval(playTheGame);
+}
+
+function pause() {
+    clearInterval(botInterval);
 }
 
 function startClicking() {
@@ -1208,7 +1213,9 @@ function stopBuying() {
 }
 
 function stop() {
-    clearInterval(botInterval);
+    stopClicking();
+    stopBuying();
+    pause();
 }
 
 start(0, 0);
