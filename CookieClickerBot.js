@@ -1105,7 +1105,7 @@ function initializeAutoClicker() {
     Game.prefs.fancy = 0;
     Game.prefs.filters = 0;
     Game.prefs.particles = 0;
-    Game.prefs.numbers = 1;
+    Game.prefs.numbers = 0;
     Game.prefs.milk = 0;
     Game.prefs.cursors = 0;
     Game.prefs.wobbly = 0;
