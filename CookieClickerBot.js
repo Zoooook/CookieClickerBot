@@ -32,7 +32,14 @@ function amount(building, testBuy, testBuyCount) {
 function calculateTieredCpsMult(me, testBuy, testBuyCount, testUpgrade) {
     let mult = 1;
     for (let i in me.tieredUpgrades) {
-        if (!Game.Tiers[me.tieredUpgrades[i].tier].special && willHave(me.tieredUpgrades[i].name, testUpgrade)) mult *= 2;
+        if (!Game.Tiers[me.tieredUpgrades[i].tier].special && willHave(me.tieredUpgrades[i].name, testUpgrade)) {
+            let tierMult = 2;
+            if (Game.ascensionMode != 1 &&
+                willHave(me.unshackleUpgrade, testUpgrade) &&
+                willHave(Game.Tiers[me.tieredUpgrades[i].tier].unshackleUpgrade, testUpgrade)
+            ) tierMult += me.id == 1 ? 0.5 : (20 - me.id) * 0.1;
+            mult *= tierMult;
+        }
     }
     for (let i in me.synergies) {
         const syn = me.synergies[i];
@@ -42,7 +49,7 @@ function calculateTieredCpsMult(me, testBuy, testBuyCount, testUpgrade) {
         }
     }
     if (me.fortune && willHave(me.fortune.name, testUpgrade)) mult *= 1.07;
-    if (me.grandma && willHave(me.grandma.name, testUpgrade)) mult *= (1 + amount(Game.Objects['Grandma'], testBuy, testBuyCount) * 0.01 * (1/(me.id-1)));
+    if (me.grandma && willHave(me.grandma.name, testUpgrade)) mult *= (1 + amount(Game.Objects['Grandma'], testBuy, testBuyCount) * 0.01 * (1 / (me.id - 1)));
     return mult;
 }
 
@@ -93,6 +100,11 @@ function calculateGrandmaCps(testBuy, testBuyCount, testUpgrade) {
     if (willHave('Elderwort biscuits',             testUpgrade)) mult *= 1.02;
 
     mult *= Game.eff('grandmaCps');
+    if (Game.Has('Cat ladies')) {
+        for (let i=0; i<Game.UpgradesByPool['kitten'].length; ++i) {
+            if (willHave(Game.UpgradesByPool['kitten'][i].name, testUpgrade)) mult *= 1.29;
+        }
+    }
     mult *= calculateTieredCpsMult(Game.Objects['Grandma'], testBuy, testBuyCount, testUpgrade);
 
     let add = 0;
@@ -114,9 +126,7 @@ function calculateBuildingCps(buildingName, testBuy, testBuyCount, testUpgrade) 
     if (buildingName == 'Cursor')  return calculateCursorCps( testBuy, testBuyCount, testUpgrade);
     if (buildingName == 'Grandma') return calculateGrandmaCps(testBuy, testBuyCount, testUpgrade);
 
-    let mult = 1;
-    mult *= calculateTieredCpsMult(Game.Objects[buildingName], testBuy, testBuyCount, testUpgrade);
-    return Game.Objects[buildingName].baseCps * mult;
+    return Game.Objects[buildingName].baseCps * calculateTieredCpsMult(Game.Objects[buildingName], testBuy, testBuyCount, testUpgrade);
 }
 
 function calculateHeavenlyMultiplier(testUpgrade) {
@@ -165,7 +175,7 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
 
     if (Game.ascensionMode != 1) mult += parseFloat(Game.prestige) * 0.01 * Game.heavenlyPower * calculateHeavenlyMultiplier(testUpgrade);
 
-    mult *= Game.eff('cps');
+    if (effs.cps) mult *= effs.cps;
 
     if (willHave('Heralds', testUpgrade) && Game.ascensionMode != 1) mult *= 1 + 0.01 * Game.heralds;
 
@@ -186,6 +196,7 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
     if (willHave('Santa\'s dominion',           testUpgrade)) mult *= 1.2;
     if (willHave('Fortune #100',                testUpgrade)) mult *= 1.01;
     if (willHave('Fortune #101',                testUpgrade)) mult *= 1.07;
+    if (willHave('Dragon scale',                testUpgrade)) mult *= 1.03;
 
     let buildMult = 1;
     if (Game.hasGod) {
@@ -217,17 +228,7 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
 
     if (willHave('Santa\'s legacy', testUpgrade)) mult *= 1 + (Game.santaLevel + 1 + testSanta) * 0.03;
 
-    for (let i in Game.Objects) {
-        const building = Game.Objects[i];
-        let storedCps = calculateBuildingCps(building.name, testBuy, testBuyCount, testUpgrade);
-        if (Game.ascensionMode != 1) storedCps *= (1 + building.level * 0.01) * buildMult;
-        const storedTotalCps = amount(building, testBuy, testBuyCount) * storedCps;
-        cookiesPs += storedTotalCps;
-    }
-
-    if (willHave('"egg"', testUpgrade)) cookiesPs += 9;
-
-    const milkProgress = (Game.AchievementsOwned + testAchievement)/25;
+    const milkProgress = (Game.AchievementsOwned + testAchievement) / 25;
     let milkMult = 1;
     if (willHave('Santa\'s milk and cookies', testUpgrade)) milkMult *= 1.05;
     milkMult *= 1 + Game.auraMult('Breath of Milk') * 0.05;
@@ -237,7 +238,7 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
         else if (godLvl == 2) milkMult *= 1.05;
         else if (godLvl == 3) milkMult *= 1.03;
     }
-    milkMult *= Game.eff('milk');
+    if (effs.milk) milkMult *= effs.milk;
 
     let catMult = 1;
 
@@ -260,6 +261,18 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
     if (willHave('Fortune #103',                              testUpgrade)) catMult *= (1 + milkProgress * 0.05  * milkMult);
 
     mult *= catMult;
+
+    for (let i in Game.Objects) {
+        const building = Game.Objects[i];
+        let storedCps = calculateBuildingCps(building.name, testBuy, testBuyCount, testUpgrade);
+        if (Game.ascensionMode != 1) storedCps *= (1 + building.level * 0.01) * buildMult;
+        if (building.id == 1 && willHave('Milkhelp&reg; lactose intolerance relief tablets', testUpgrade)) storedCps *= 1 + 0.05 * milkProgress * milkMult;
+        const storedTotalCps = amount(building, testBuy, testBuyCount) * storedCps;
+        cookiesPs += storedTotalCps;
+    }
+
+    if (willHave('"egg"', testUpgrade)) cookiesPs += 9;
+
 
     let eggMult = 1;
     if (willHave(  'Chicken egg', testUpgrade)) eggMult *= 1.01;
@@ -306,6 +319,9 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
     if (willHave('Shimmering veil [off]', testUpgrade)) {
         let veilMult = 0.5;
         if (willHave('Reinforced membrane', testUpgrade)) veilMult += 0.1;
+        if (willHave('Delicate touch',      testUpgrade)) veilMult += 0.05;
+        if (willHave('Steadfast murmur',    testUpgrade)) veilMult += 0.05;
+        if (willHave('Glittering edge',     testUpgrade)) veilMult += 0.05;
         mult *= 1 + veilMult;
     }
     if (willHave('Magic shenanigans',  testUpgrade)) mult *= 1000;
@@ -351,6 +367,7 @@ function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade) {
     if (willHave('Cookie egg',       testUpgrade)) mult *= 1.1;
     if (willHave('Halo gloves',      testUpgrade)) mult *= 1.1;
     if (willHave('Dragon claw',      testUpgrade)) mult *= 1.03;
+    if (willHave('Aura gloves',      testUpgrade)) mult *= 1 + 0.05 * Math.min(Game.Objects['Cursor'].level, willHave('Luminous gloves', testUpgrade) ? 20 : 10);
     mult *= Game.eff('click');
 
     if (Game.hasGod) {
@@ -368,10 +385,8 @@ function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade) {
 
     return mult * Game.ComputeCps(
         1,
-        willHave('Reinforced index finger', testUpgrade) +
-        willHave('Carpal tunnel prevention cream', testUpgrade) +
-        willHave('Ambidextrous', testUpgrade),
-        add
+        willHave('Reinforced index finger', testUpgrade) + willHave('Carpal tunnel prevention cream', testUpgrade) + willHave('Ambidextrous', testUpgrade),
+        add,
     );
 }
 
@@ -393,6 +408,7 @@ function calculateWrinklerBoostMultiplier() {
     let mult = witheredProportion * 1.1;
     if (Game.Has('Sacrilegious corruption')) mult *= 1.05;
     if (Game.Has('Wrinklerspawn'))           mult *= 1.05;
+    mult *= 1 + Game.auraMult('Dragon Guts') * 0.2;
     if (Game.hasGod) {
         const godLvl = Game.hasGod('scorn');
         if      (godLvl == 1) mult *= 1.15;
@@ -432,7 +448,7 @@ function calculateTotalCps(isDefault, args) {
     const numWrinklers = countWrinklers()
 
     if (numWrinklers) {
-        const witheredMultiplier = 1 - numWrinklers * Game.eff('wrinklerEat') / 20;
+        const witheredMultiplier = 1 - numWrinklers * Game.eff('wrinklerEat') * (1 + Game.auraMult('Dragon Guts') * 0.2) / 20;
         const apparentPassiveCps = baseCps * witheredMultiplier;
         const apparentTotalCps = apparentPassiveCps + clickCps;
 
