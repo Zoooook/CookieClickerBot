@@ -8,8 +8,6 @@
 // take into account all achievements, upgrade unlocks
 // ascension -- maybe need to take into account longterm expected production, ignore buffs, also upgrade unlocks
 // save scum sugar lump harvesting
-
-// math for auras and grandmas
 // minigames, level objects
 
 document.getElementById("game").style.top=0
