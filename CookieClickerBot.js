@@ -3,6 +3,7 @@
 // print shimmer clicks, wrinklers
 // cheap upgrades by time not bank
 // print ordered list of upgrades by value
+// stay on christmas until all reindeer cookies
 
 // wait for shiny wrinkler to bite cookie
 // grab all cheap upgrades at once
@@ -434,7 +435,7 @@ function calculateTotalCps(isDefault, args) {
 
         if (isDefault) {
             console.log('\n');
-            if (Object.keys(Game.buffs).length) console.log('   ', Game.buffs);
+            if (Object.keys(Game.buffs).length) console.log('   ', Object.keys(Game.buffs).toString());
             clicksPerSecondShort = clickCountShort * 1000 / (now - clickCountShortStart);
             console.log('    ' + clicksPerSecondShort.toFixed(1) + ' clicks/second from ' + formatTime(clickCountShortStart) + ' to ' + formatTime(now));
             console.log('    ' + clicksPerSecond.toFixed(1) + ' clicks/second from ' + formatTime(clickCountStart) + ' to ' + formatTime(now));
@@ -512,9 +513,9 @@ function clog(thing, message) {
     else message = '';
     message += thing.type + ': ' + thing.name;
     if (thing.buyCount) message += ' x' + thing.buyCount;
-    if (thing.percent) message += ', +' + thing.percent.toPrecision(4) + '%';
-    if (thing.price) message += ', $' + thing.price.toPrecision(4);
-    if (thing.value) message += ', value: ' + thing.value.toPrecision(4);
+    if (thing.percent) message += ', +' + thing.percent.toFixed(4) + '%';
+    if (thing.price) message += ', $' + thing.price.toPrecision(5);
+    if (thing.value) message += ', value: ' + thing.value.toPrecision(5);
     if (thing.price && Game.cookies < thing.price) message += ', T-' + formatSeconds((thing.price - Game.cookies) / currentCps);
     console.log(message);
 }
@@ -799,42 +800,32 @@ function doOrCalculateBestThing(){
         }
     }
 
-    console.log(things);
+    const values = Object.entries(things).sort((a, b) => {
+        return (b[1].value || 0) - (a[1].value || 0);
+    }).map(thing => {
+        return {
+            value: thing[1].value.toPrecision(5),
+            percent: thing[1].percent.toFixed(4),
+            price: thing[1].price.toPrecision(5),
+            name: thing[0],
+        };
+    });
+    console.log('Upgrades by value: ', values);
+    console.log('Upgrades by name: ', things);
 
-    // Find best value purchase
-    best = {value: 0};
-    for (let i in things) {
-        const thing = things[i];
-        if (thing.value > best.value) best = thing;
-    }
+    best = things[values[0].name];
+    clog(best, 'best');
 
     // Find better purchases for speed (sometimes by lowering prices)
-    if (best.name) {
-        clog(best, 'best');
-
-        let betterThings = [best.name];
-
-        while (betterThings.length) {
-            let better = {value: -1};
-            for (let i=0; i<betterThings.length; ++i) {
-                const thing = things[betterThings[i]];
-                if (thing.value > better.value) better = thing;
-            }
-
-            if (best.name != better.name) {
-                best = better;
+    for (let i = 1; i < values.length; ++i) {
+        const thing = things[values[i].name];
+        if (thing.price < best.price && !thing.ignore) {
+            // These are slightly inaccurate for bulk building purchases, it should be good enough though
+            const timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, best.buyCount || 1, args[thing.name])/thing.cps;
+            const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, thing.buyCount || 1, args[best.name])/best.cps;
+            if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
+                best = thing;
                 clog(best, 'better');
-            }
-
-            betterThings = [];
-            for (let i in things) {
-                const thing = things[i];
-                if (thing.name != best.name && thing.price < best.price && !thing.ignore) {
-                    // These are slightly inaccurate for bulk building purchases, it should be good enough though
-                    const timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, best.buyCount || 1, args[thing.name])/thing.cps;
-                    const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, thing.buyCount || 1, args[best.name])/best.cps;
-                    if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) betterThings.push(thing.name);
-                }
             }
         }
     }
