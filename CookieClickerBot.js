@@ -1,3 +1,4 @@
+// estimate long term production
 // big upgrades switch dragon aura to master of the armory
 // print shimmer clicks, wrinklers
 // stay on christmas until all reindeer cookies
