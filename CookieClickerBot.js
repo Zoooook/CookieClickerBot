@@ -813,19 +813,22 @@ function doOrCalculateBestThing(){
     console.log('Upgrades by value: ', values);
     console.log('Upgrades by name: ', things);
 
-    best = things[values[0].name];
-    clog(best, 'best');
+    // During cursed finger all values are 0
+    if (values[0].value > 0) {
+        best = things[values[0].name];
+        clog(best, 'best');
 
-    // Find better purchases for speed (sometimes by lowering prices)
-    for (let i = 1; i < values.length; ++i) {
-        const thing = things[values[i].name];
-        if (thing.price < best.price && !thing.ignore) {
-            // These are slightly inaccurate for bulk building purchases, it should be good enough though
-            const timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, best.buyCount || 1, args[thing.name])/thing.cps;
-            const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, thing.buyCount || 1, args[best.name])/best.cps;
-            if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
-                best = thing;
-                clog(best, 'better');
+        // Find better purchases for speed (sometimes by lowering prices)
+        for (let i = 1; i < values.length; ++i) {
+            const thing = things[values[i].name];
+            if (thing.price < best.price && !thing.ignore) {
+                // These are slightly inaccurate for bulk building purchases, it should be good enough though
+                const timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, best.buyCount || 1, args[thing.name])/thing.cps;
+                const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, thing.buyCount || 1, args[best.name])/best.cps;
+                if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
+                    best = thing;
+                    clog(best, 'better');
+                }
             }
         }
     }
