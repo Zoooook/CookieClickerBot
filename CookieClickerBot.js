@@ -430,7 +430,7 @@ function calculateTotalCps(isDefault, args) {
 
         if (isDefault) {
             console.log('\n');
-            if (Object.keys(Game.buffs).length) console.log('   ', Object.keys(Game.buffs).toString());
+            if (Object.keys(Game.buffs).length) console.log('   ', Object.keys(Game.buffs).join(', '));
             clicksPerSecondShort = clickCountShort * 1000 / (now - clickCountShortStart);
             console.log('    ' + clicksPerSecondShort.toFixed(1) + ' clicks/second from ' + formatTime(clickCountShortStart) + ' to ' + formatTime(now));
             console.log('    ' + clicksPerSecond.toFixed(1) + ' clicks/second from ' + formatTime(clickCountStart) + ' to ' + formatTime(now));
