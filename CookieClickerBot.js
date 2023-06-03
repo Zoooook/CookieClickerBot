@@ -971,24 +971,27 @@ function doOrCalculateBestThing(){
     // Override best purchase with specific upgrades if cheaper
     for (let i in things) {
         const thing = things[i];
-        if ([
-            'Lucky day',
-            'Serendipity',
-            'Get lucky',
-            'Sacrificial rolling pins',
-            'A festive hat',
-            'Reindeer baking grounds',
-            'Ho ho ho-flavored frosting',
-            'Santa\'s bottomless bag',
-            'Golden goose egg',
-            'Wrinklerspawn',
-            'Omelette',
-            '"egg"',
-            'A crumbly egg',
-            'Elder Pledge',
-            'Elder Covenant',
-            'Revoke Elder Covenant',
-        ].includes(thing.name) && (!best.name || thing.price <= best.price)) {
+        if ((!best.name || thing.price <= best.price) && (
+            ['Dragon fang', 'Dragon teddy bear'].includes(thing.name) && best.name != 'dragon' ||
+            [
+                'Lucky day',
+                'Serendipity',
+                'Get lucky',
+                'Sacrificial rolling pins',
+                'A festive hat',
+                'Reindeer baking grounds',
+                'Ho ho ho-flavored frosting',
+                'Santa\'s bottomless bag',
+                'Golden goose egg',
+                'Wrinklerspawn',
+                'Omelette',
+                '"egg"',
+                'A crumbly egg',
+                'Elder Pledge',
+                'Elder Covenant',
+                'Revoke Elder Covenant',
+            ].includes(thing.name)
+        )) {
             best = thing;
             clog(best, 'override');
         }
