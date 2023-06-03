@@ -1,11 +1,9 @@
-// elder batallion instead of radiant appetite
+// pet the dragon
 // big upgrades switch dragon aura to master of the armory
 // print shimmer clicks, wrinklers
-// cheap upgrades by time not bank
-// print ordered list of upgrades by value
 // stay on christmas until all reindeer cookies
+// anticipate aura value before 200 yous
 
-// wait for shiny wrinkler to bite cookie
 // grab all cheap upgrades at once
 // find out why it's printing cheap upgrades multiple times
 // take into account all achievements, upgrade unlocks
@@ -90,7 +88,7 @@ function calculateCursorCps(testBuy, testBuyCount, testUpgrade) {
     ) * mult;
 }
 
-function calculateGrandmaCps(testBuy, testBuyCount, testUpgrade) {
+function calculateGrandmaCps(testBuy, testBuyCount, testUpgrade, testAura) {
     let mult = 1;
     for (let i in Game.GrandmaSynergies) {
         if (willHave(Game.GrandmaSynergies[i], testUpgrade)) mult *= 2;
@@ -118,26 +116,26 @@ function calculateGrandmaCps(testBuy, testBuyCount, testUpgrade) {
         if (Game.Objects[i].name!='Grandma') num += amount(Game.Objects[i], testBuy, testBuyCount);
     }
 
-    mult *= 1 + Game.auraMult('Elder Battalion') * 0.01 * num;
+    mult *= 1 + testAuraMult('Elder Battalion', testAura) * 0.01 * num;
 
     return (Game.Objects['Grandma'].baseCps + add) * mult;
 }
 
-function calculateBuildingCps(buildingName, testBuy, testBuyCount, testUpgrade) {
-    if (buildingName == 'Cursor')  return calculateCursorCps( testBuy, testBuyCount, testUpgrade);
-    if (buildingName == 'Grandma') return calculateGrandmaCps(testBuy, testBuyCount, testUpgrade);
+function calculateBuildingCps(buildingName, testBuy, testBuyCount, testUpgrade, testAura) {
+    if (buildingName == 'Cursor') return calculateCursorCps(testBuy, testBuyCount, testUpgrade);
+    if (buildingName == 'Grandma') return calculateGrandmaCps(testBuy, testBuyCount, testUpgrade, testAura);
 
     return Game.Objects[buildingName].baseCps * calculateTieredCpsMult(Game.Objects[buildingName], testBuy, testBuyCount, testUpgrade);
 }
 
-function calculateHeavenlyMultiplier(testUpgrade) {
+function calculateHeavenlyMultiplier(testUpgrade, testAura) {
     let heavenlyMult = 0;
     if (willHave('Heavenly chip secret',   testUpgrade)) heavenlyMult += 0.05;
     if (willHave('Heavenly cookie stand',  testUpgrade)) heavenlyMult += 0.20;
     if (willHave('Heavenly bakery',        testUpgrade)) heavenlyMult += 0.25;
     if (willHave('Heavenly confectionery', testUpgrade)) heavenlyMult += 0.25;
     if (willHave('Heavenly key',           testUpgrade)) heavenlyMult += 0.25;
-    heavenlyMult *= 1 + Game.auraMult('Dragon God') * 0.05;
+    heavenlyMult *= 1 + testAuraMult('Dragon God', testAura) * 0.05;
     if (willHave('Lucky digit',  testUpgrade)) heavenlyMult *= 1.01;
     if (willHave('Lucky number', testUpgrade)) heavenlyMult *= 1.01;
     if (willHave('Lucky payout', testUpgrade)) heavenlyMult *= 1.01;
@@ -150,12 +148,11 @@ function calculateHeavenlyMultiplier(testUpgrade) {
     return heavenlyMult;
 }
 
-function auraMultRadiantAppetite(testAura) {
+function testAuraMult(aura, testAura) {
     if ([
-        Game.dragonAuras[Game.dragonAura].name,
-        Game.dragonAuras[Game.dragonAura2].name,
-        testAura
-    ].includes('Radiant Appetite')) return 1;
+        testAura || Game.dragonAuras[Game.dragonAura].name,
+        testAura || Game.dragonAuras[Game.dragonAura2].name,
+    ].includes(aura)) return 1;
     return 0;
 }
 
@@ -174,7 +171,7 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
         }
     }
 
-    if (Game.ascensionMode != 1) mult += parseFloat(Game.prestige) * 0.01 * Game.heavenlyPower * calculateHeavenlyMultiplier(testUpgrade);
+    if (Game.ascensionMode != 1) mult += parseFloat(Game.prestige) * 0.01 * Game.heavenlyPower * calculateHeavenlyMultiplier(testUpgrade, testAura);
 
     if (effs.cps) mult *= effs.cps;
 
@@ -232,7 +229,7 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
     const milkProgress = (Game.AchievementsOwned + testAchievement) / 25;
     let milkMult = 1;
     if (willHave('Santa\'s milk and cookies', testUpgrade)) milkMult *= 1.05;
-    milkMult *= 1 + Game.auraMult('Breath of Milk') * 0.05;
+    milkMult *= 1 + testAuraMult('Breath of Milk', testAura) * 0.05;
     if (Game.hasGod) {
         const    godLvl = Game.hasGod('mother');
         if      (godLvl == 1) milkMult *= 1.1;
@@ -265,7 +262,7 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
 
     for (let i in Game.Objects) {
         const building = Game.Objects[i];
-        let storedCps = calculateBuildingCps(building.name, testBuy, testBuyCount, testUpgrade);
+        let storedCps = calculateBuildingCps(building.name, testBuy, testBuyCount, testUpgrade, testAura);
         if (Game.ascensionMode != 1) storedCps *= (1 + building.level * 0.01) * buildMult;
         if (building.id == 1 && willHave('Milkhelp&reg; lactose intolerance relief tablets', testUpgrade)) storedCps *= 1 + 0.05 * milkProgress * milkMult;
         const storedTotalCps = amount(building, testBuy, testBuyCount) * storedCps;
@@ -298,9 +295,9 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
 
     if (willHave('Sugar baking', testUpgrade)) mult *= (1 + Math.min(100, Game.lumps) * 0.01);
 
-    mult *= 1 + auraMultRadiantAppetite(testAura);
+    mult *= 1 + testAuraMult('Radiant Appetite', testAura);
 
-    let auraMult = Game.auraMult('Dragon\'s Fortune');
+    let auraMult = testAuraMult('Dragon\'s Fortune', testAura);
     for (let i=0; i<Game.shimmerTypes['golden'].n; ++i) {
         mult *= 1 + auraMult * 1.23;
     }
@@ -335,7 +332,7 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
     return cookiesPs * mult;
 }
 
-function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade) {
+function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade, testAura) {
     if (Game.hasBuff('Cursed finger')) return Game.buffs['Cursed finger'].power;
 
     let add = calculateCursorBaseCps(testUpgrade);
@@ -382,7 +379,7 @@ function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade) {
         if (typeof Game.buffs[i].multClick != 'undefined') mult *= Game.buffs[i].multClick;
     }
 
-    mult *= 1 + Game.auraMult('Dragon Cursor') * 0.05;
+    mult *= 1 + testAuraMult('Dragon Cursor', testAura) * 0.05;
 
     return mult * Game.ComputeCps(
         1,
@@ -391,8 +388,8 @@ function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade) {
     );
 }
 
-function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade) {
-    return clicksPerSecond * calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade);
+function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
+    return clicksPerSecond * calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade, testAura);
 }
 
 function countWrinklers() {
@@ -403,13 +400,13 @@ function countWrinklers() {
     return count;
 }
 
-function calculateWrinklerBoostMultiplier() {
+function calculateWrinklerBoostMultiplier(testAura) {
     const witheredProportion = countWrinklers() * Game.eff('wrinklerEat') / 20;
 
     let mult = witheredProportion * 1.1;
     if (Game.Has('Sacrilegious corruption')) mult *= 1.05;
     if (Game.Has('Wrinklerspawn'))           mult *= 1.05;
-    mult *= 1 + Game.auraMult('Dragon Guts') * 0.2;
+    mult *= 1 + testAuraMult('Dragon Guts', testAura) * 0.2;
     if (Game.hasGod) {
         const godLvl = Game.hasGod('scorn');
         if      (godLvl == 1) mult *= 1.15;
@@ -449,12 +446,12 @@ function calculateTotalCps(isDefault, args) {
     const numWrinklers = countWrinklers()
 
     if (numWrinklers) {
-        const witheredMultiplier = 1 - numWrinklers * Game.eff('wrinklerEat') * (1 + Game.auraMult('Dragon Guts') * 0.2) / 20;
+        const witheredMultiplier = 1 - numWrinklers * Game.eff('wrinklerEat') * (1 + testAuraMult('Dragon Guts', args[5]) * 0.2) / 20;
         const apparentPassiveCps = baseCps * witheredMultiplier;
         const apparentTotalCps = apparentPassiveCps + clickCps;
 
         if (isDefault && trueClicksPerSecond) {
-            const boostedMultiplier = calculateWrinklerBoostMultiplier();
+            const boostedMultiplier = calculateWrinklerBoostMultiplier(args[5]);
             const actualPassiveCps = baseCps * boostedMultiplier;
             const actualTotalCps = actualPassiveCps + clickCps;
 
@@ -530,7 +527,7 @@ function calculateBuildingPrice(buildingName, testBuy, testBuyCount, testUpgrade
     if (willHave('Divine discount',   testUpgrade)) price *= 0.99;
     if (willHave('Fortune #100',      testUpgrade)) price *= 0.99;
 
-    price *= 1 - Game.auraMult('Fierce Hoarder') * 0.02;
+    price *= 1 - testAuraMult('Fierce Hoarder', testAura) * 0.02;
     if (Game.hasBuff('Everything must go')) price *= 0.95;
     if (Game.hasBuff('Crafty pixies'))      price *= 0.98;
     if (Game.hasBuff('Nasty goblins'))      price *= 1.02;
@@ -560,9 +557,10 @@ function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, 
         if (willHave('Faberge egg',          testUpgrade)) price *= 0.99;
         if (willHave('Divine sales',         testUpgrade)) price *= 0.99;
         if (willHave('Fortune #100',         testUpgrade)) price *= 0.99;
+        if (upgrade.kitten && willHave('Kitten wages', testUpgrade)) price*=0.9;
         if (Game.hasBuff('Haggler\'s luck'))               price *= 0.98;
         if (Game.hasBuff('Haggler\'s misery'))             price *= 1.02;
-        price *= 1 - Game.auraMult('Master of the Armory') * 0.02;
+        price *= 1 - testAuraMult('Master of the Armory', testAura) * 0.02;
         price *= Game.eff('upgradeCost');
         if (upgrade.pool == 'cookie' && willHave('Divine bakeries', testUpgrade)) price /= 5;
     }
@@ -600,7 +598,7 @@ function calculatePrice(type, name, buyCount, args) {
                 for(let i=Game.dragonLevel; i<5; ++i) price += 1000000*Math.pow(2, i);
             } else {
                 price = calculateTotalBuildingCost(args);
-                if (Game.dragonLevel == Game.dragonLevels.length - 3) price += calculateUpgradePrice(Game.Upgrades['Dragon cookie'].name, ...args);
+                if (Game.dragonLevel == Game.dragonLevels.length - 3) price += calculateUpgradePrice('Dragon cookie', ...args);
             }
 
             return price;
@@ -623,6 +621,32 @@ function createMultiBuildingThing(args) {
     thing.value = thing.percent / thing.price;
 
     return thing;
+}
+
+function findBestAura(testBuy, testBuyCount) {
+    const dragonArgs = [testBuy, testBuyCount, '', 0, 0];
+    const auras = [
+        {level: 5, name: 'Breath of Milk'},
+        {level: 7, name: 'Elder Battalion'},
+        {level: 19, name: 'Radiant Appetite'},
+    ];
+    let bestAura = {cps: 0};
+
+    for (let i = 0; i < auras.length; ++i) {
+        const aura = auras[i];
+        if (Game.dragonLevel < aura.level) break;
+        aura.cps = calculateTotalCps(0, dragonArgs.concat(aura.name));
+        if (aura.cps > bestAura.cps) bestAura = aura;
+    }
+    return bestAura;
+}
+
+function getHighestBuilding() {
+    let highestBuilding={};
+    for (let i in Game.Objects) {
+        if (Game.Objects[i].amount>0) highestBuilding = Game.Objects[i];
+    }
+    return highestBuilding;
 }
 
 function doOrCalculateBestThing(){
@@ -653,6 +677,24 @@ function doOrCalculateBestThing(){
                 if (wrinkler.phase && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
             }
         }
+
+        // Set aura (sacrifice a building) before any more buildings are built
+        if (autoBuyer && Game.Has('A crumbly egg')) {
+            if (Game.dragonLevel >= 14 && !Game.hasAura('Dragonflight')) {
+                best = {type: 'aura', name: 'Dragonflight', price: 0};
+                console.log('\n');
+                clog(best);
+                return;
+            } else if (Game.dragonLevel < 14 || Game.dragonLevel == Game.dragonLevels.length - 1) {
+                const bestAura = findBestAura(getHighestBuilding(), -1);
+                if (!Game.hasAura(bestAura.name)) {
+                    best = {type: 'aura', name: bestAura.name, cps: bestAura.cps, price: 0, percent: (bestAura.cps / currentCps - 1) * 100};
+                    console.log('\n');
+                    clog(best);
+                    return;
+                }
+            }
+        }
     }
 
     // Wait to sell grandma until we can buy her back
@@ -660,21 +702,6 @@ function doOrCalculateBestThing(){
         best = {type: 'sell', name: 'Grandma', price: Math.ceil(Game.Objects['Grandma'].price*15/23)}
         clog(best);
         return;
-    }
-
-    // Set aura (sacrifice a building) before any more buildings are built
-    if (autoClicker && Game.Has('A crumbly egg')) {
-        if (Game.dragonLevel >= 14 && !Game.hasAura('Dragonflight')) {
-            best = {type: 'aura', name: 'Dragonflight', price: 0};
-            console.log('\n');
-            clog(best);
-            return;
-        } else if (Game.dragonLevel == Game.dragonLevels.length - 1 && !Game.hasAura('Radiant Appetite')) {
-            best = {type: 'aura', name: 'Radiant Appetite', price: 0};
-            console.log('\n');
-            clog(best);
-            return;
-        }
     }
 
     // Start best purchase calculation
@@ -742,7 +769,7 @@ function doOrCalculateBestThing(){
         }
 
         else if (
-            upgrade.name == 'Elder Pledge'   && !Game.HasAchiev('Elder slumber') ||
+            upgrade.name == 'Elder Pledge' && !Game.HasAchiev('Elder slumber') ||
             upgrade.name == 'Elder Covenant' && Game.Upgrades['Elder Pledge'].unlocked==0 ||
             upgrade.name == 'Revoke Elder Covenant'
         ) things[upgrade.name] = {type: 'upgrade', name: upgrade.name, price: calculateUpgradePrice(upgrade.name, ...defaultArgs), ignore: 1};
@@ -883,7 +910,7 @@ function doOrCalculateBestThing(){
     }
 
     // Override best purchase with dragon upgrades
-    if (Game.Has('A crumbly egg') && Game.dragonLevel < Game.dragonLevels.length - 1 && Game.dragonLevels[Math.max(Game.dragonLevel,5)].cost()) {
+    if (Game.Has('A crumbly egg') && Game.dragonLevel < Game.dragonLevels.length - 1 && Game.dragonLevels[Math.max(Game.dragonLevel,5)].cost()) { // cost() tests if you can afford it
         things.dragon = {type: 'upgrade', name: 'dragon'};
 
         const buildingIndex = Math.max(Game.dragonLevel - 5, 0);
@@ -892,39 +919,30 @@ function doOrCalculateBestThing(){
         if (!best.name) {
             best = things.dragon;
             clog(best, 'best');
-        // Sacrifice buildings before buying any more of them
+        // Sacrifice buildings before buying any more of them, or train dragonflight
         } else if (Game.dragonLevel < Game.dragonLevels.length - 4) {
-            if (Game.dragonLevel == 13 || best.type == 'building' && (
-                best.name == Game.ObjectsById[buildingIndex].name ||
-                best.name == Game.ObjectsById[buildingIndex+1].name && Game.ObjectsById[buildingIndex+1].amount >= 100
-            )) {
+            if (best.type == 'building' && Game.Objects[best.name].id >= Game.dragonLevel - 5 && Game.Objects[best.name].amount >= 100 || Game.dragonLevel == 13) {
                 best = things.dragon;
                 clog(best, 'override');
             }
         } else {
+            // if level == length - 4, sacrifice 100 of top building
             if (best.type == 'building') {
                 best = things.dragon;
                 clog(best, 'override');
             // Override upgrade purchases if dragon is better
             } else if (Game.dragonLevel > Game.dragonLevels.length - 4) {
-                args.dragon = ['', 0, '', 0, 0, ''];
-                if      (Game.dragonLevel == Game.dragonLevels.length - 3) args.dragon[2] = 'Dragon cookie';
-                else if (Game.dragonLevel == Game.dragonLevels.length - 2) args.dragon[5] = 'Radiant Appetite';
+                // ignore dragon cookie, radiant appetite is always way better
+                const bestAura = findBestAura('', 0);
+                things.dragon.cps = bestAura.cps;
 
-                things.dragon.cps = calculateTotalCps(0, args.dragon);
                 things.dragon.percent = (things.dragon.cps / currentCps - 1) * 100;
                 things.dragon.value = things.dragon.percent / things.dragon.price;
+                if (Game.dragonLevel == Game.dragonLevels.length - 3) things.dragon.value /= 2; // have to buy back buildings twice, leave cost alone so we go ahead and level up once
 
-                if (things.dragon.value > best.value && things.dragon.price < best.price) {
+                if (things.dragon.value > best.value) {
                     best = things.dragon;
-                    clog(best, 'best');
-                } else if (things.dragon.value > best.value || things.dragon.price < best.price) {
-                    const timeTillBothThingsIfFirst = things.dragon.price/currentCps + calculatePrice(best.type, best.name, best.buyCount || 1, args.dragon)/things.dragon.cps;
-                    const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice('upgrade', 'dragon', buildingIndex, args[best.name])/best.cps;
-                    if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
-                        best = things.dragon;
-                        clog(best, 'better');
-                    }
+                    clog(best, 'better');
                 }
             }
         }
@@ -1026,14 +1044,12 @@ function playTheGame() {
             Game.specialTab = 'dragon';
             Game.ToggleSpecialMenu(1);
 
-            let highestBuilding={};
-            for (let i in Game.Objects) {
-                if (Game.Objects[i].amount>0) highestBuilding = Game.Objects[i];
-            }
+            const highestBuilding=getHighestBuilding();
             if (highestBuilding.id) Game.ObjectsById[highestBuilding.id].sacrifice(1);
 
-            if      (best.name == 'Dragonflight')     Game.dragonAura=10;
-            else if (best.name == 'Radiant Appetite') Game.dragonAura2=15;
+            const dragonAura = Object.values(Game.dragonAuras).find(aura => {return aura.name == best.name}).id;
+            if (Game.dragonLevel == Game.dragonLevels.length - 1 && best.name != 'Dragonflight') Game.dragonAura2 = dragonAura;
+            else Game.dragonAura = dragonAura;
         } else if (best.type == 'wrinkler') Game.wrinklers[Number(best.name)].hp = -10;
         else if (best.type == 'sell') Game.Objects[best.name].sell(1);
 
@@ -1228,4 +1244,4 @@ function stop() {
     pause();
 }
 
-start(0, 0);
+start(0,0);
