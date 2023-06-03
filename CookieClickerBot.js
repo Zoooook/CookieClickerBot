@@ -1,4 +1,3 @@
-// pet the dragon
 // big upgrades switch dragon aura to master of the armory
 // print shimmer clicks, wrinklers
 // stay on christmas until all reindeer cookies
@@ -675,6 +674,27 @@ function doOrCalculateBestThing(){
             for (let i=0; i<Game.getWrinklersMax(); ++i) {
                 const wrinkler = Game.wrinklers[i];
                 if (wrinkler.phase && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
+            }
+        }
+
+        // Pet the dragon
+        let drops = ['Dragon scale', 'Dragon claw', 'Dragon fang', 'Dragon teddy bear'];
+        if (Game.Has('Pet the dragon') && Game.dragonLevel >= 8 && (
+            !Game.HasUnlocked(drops[0]) ||
+            !Game.HasUnlocked(drops[1]) ||
+            !Game.HasUnlocked(drops[2]) ||
+            !Game.HasUnlocked(drops[3])
+        )) {
+            Math.seedrandom(Game.seed+'/dragonTime');
+            drops = shuffle(drops);
+            const drop = drops[Math.floor((new Date().getMinutes() / 60) * drops.length)];
+            if (!Game.HasUnlocked(drop)) {
+                Game.specialTab='dragon';
+                if (l('specialPic')) {
+                    while (!Game.HasUnlocked(drop)) {
+                        Game.ClickSpecialPic();
+                    }
+                }
             }
         }
 
