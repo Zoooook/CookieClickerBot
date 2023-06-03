@@ -813,7 +813,7 @@ function doOrCalculateBestThing(){
     console.log('Upgrades by value: ', values);
     console.log('Upgrades by name: ', things);
 
-    // During cursed finger all values are 0
+    // During cursed finger all values are 0, don't try to calculate because buying things then doesn't increase click power anyway
     if (values[0].value > 0) {
         best = things[values[0].name];
         clog(best, 'best');
