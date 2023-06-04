@@ -1,3 +1,5 @@
+// wrinkler math
+// take into account all achievements, upgrade unlocks
 // estimate long term production
 // big upgrades switch dragon aura to master of the armory
 // print shimmer clicks, wrinklers
@@ -6,7 +8,6 @@
 
 // grab all cheap upgrades at once
 // find out why it's printing cheap upgrades multiple times
-// take into account all achievements, upgrade unlocks
 // ascension -- maybe need to take into account longterm expected production, ignore buffs, also upgrade unlocks
 // save scum sugar lump harvesting
 // minigames, level objects
@@ -98,7 +99,7 @@ function calculateGrandmaCps(testBuy, testBuyCount, testUpgrade, testAura) {
 
     mult *= Game.eff('grandmaCps');
     if (Game.Has('Cat ladies')) {
-        for (let i=0; i<Game.UpgradesByPool['kitten'].length; ++i) {
+        for (let i = 0; i < Game.UpgradesByPool['kitten'].length; ++i) {
             if (willHave(Game.UpgradesByPool['kitten'][i].name, testUpgrade)) mult *= 1.29;
         }
     }
@@ -298,7 +299,7 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
     mult *= 1 + testAuraMult('Radiant Appetite', testAura);
 
     let auraMult = testAuraMult('Dragon\'s Fortune', testAura);
-    for (let i=0; i<Game.shimmerTypes['golden'].n; ++i) {
+    for (let i = 0; i < Game.shimmerTypes['golden'].n; ++i) {
         mult *= 1 + auraMult * 1.23;
     }
 
@@ -394,7 +395,7 @@ function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade, testAc
 
 function countWrinklers() {
     let count = 0;
-    for (let i=0; i<Game.getWrinklersMax(); ++i) {
+    for (let i = 0; i < Game.getWrinklersMax(); ++i) {
         if (Game.wrinklers[i].phase == 2) ++count;
     }
     return count;
@@ -415,7 +416,7 @@ function calculateWrinklerBoostMultiplier(testAura) {
     }
 
     let boost = 1;
-    for (let i=0; i<Game.getWrinklersMax(); ++i) {
+    for (let i = 0; i < Game.getWrinklersMax(); ++i) {
         const wrinkler = Game.wrinklers[i];
         if (wrinkler.phase == 2) {
             boost -= .05;
@@ -456,10 +457,10 @@ function calculateTotalCps(isDefault, args) {
             const actualTotalCps = actualPassiveCps + clickCps;
 
             const string1 = '    ' + apparentTotalCps.toPrecision(4) + ' / ' + actualTotalCps.toPrecision(4)
-            let   string2 = '    ' + (100 * (apparentTotalCps / totalCps - 1)).toFixed(1) + '% / ' + (100 * (actualTotalCps / totalCps - 1)).toFixed(1) + '%';
-            let   string3 = '    ' + (100 * clickCps / apparentTotalCps).toFixed(1) + '% / ' + (100 * clickCps / actualTotalCps).toFixed(1) + '%';
-            for (let i=string2.length; i<string1.length; ++i) string2 += ' ';
-            for (let i=string3.length; i<string1.length-3; ++i) string3 += ' ';
+            let   string2 = '        ' + (100 * (apparentTotalCps / totalCps - 1)).toFixed(1) + '% / ' + (100 * (actualTotalCps / totalCps - 1)).toFixed(1) + '%';
+            let   string3 = '        ' + (100 * clickCps / apparentTotalCps).toFixed(1) + '% / ' + (100 * clickCps / actualTotalCps).toFixed(1) + '%';
+            for (let i = string2.length; i < string1.length; ++i) string2 += ' ';
+            for (let i = string3.length; i < string1.length-3; ++i) string3 += ' ';
 
             console.log(string1 + ' apparent / actual cookies/second');
             console.log(string2 + ' apparent / actual wrinkler boost');
@@ -570,7 +571,7 @@ function calculateUpgradePrice(upgradeName, testBuy, testBuyCount, testUpgrade, 
 function calculateBuildingPriceMultiplier(buyCount) {
     let mult = 0;
     let add = 1;
-    for (let i=0; i<buyCount; ++i) {
+    for (let i = 0; i < buyCount; ++i) {
         mult += add;
         add *= 1.15;
     }
@@ -595,7 +596,7 @@ function calculatePrice(type, name, buyCount, args) {
             if (Game.dragonLevel < Game.dragonLevels.length - 3) {
                 // overloading buyCount as buildingIndex for dragon, bad practice but whatever
                 price = Game.ObjectsById[buyCount].price * 20/3;
-                for(let i=Game.dragonLevel; i<5; ++i) price += 1000000*Math.pow(2, i);
+                for (let i = Game.dragonLevel; i < 5; ++i) price += 1000000 * Math.pow(2, i);
             } else {
                 price = calculateTotalBuildingCost(args);
                 if (Game.dragonLevel == Game.dragonLevels.length - 3) price += calculateUpgradePrice('Dragon cookie', ...args);
@@ -653,8 +654,8 @@ function doOrCalculateBestThing(){
     // Click fortunes
     if (autoClicker && Game.TickerEffect.type=='fortune') Game.tickerL.click();
 
-    // Do nothing and make it really expensive, to stop spamming recalculate and focus on clicking
     if (Game.hasBuff('Cursed finger')) {
+        // Do nothing and make it really expensive, to stop spamming recalculate and focus on clicking
         best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned+Game.cookiesReset)*1000000000};
         clog(best);
         return;
@@ -672,14 +673,14 @@ function doOrCalculateBestThing(){
 
         // Pop phase 2 wrinklers for drops
         if (['easter', 'halloween'].includes(Game.season)) {
-            for (let i=0; i<Game.getWrinklersMax(); ++i) {
+            for (let i = 0; i < Game.getWrinklersMax(); ++i) {
                 const wrinkler = Game.wrinklers[i];
                 if (wrinkler.phase == 2 && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
             }
         }
         // Pop wrinklers for achievements
         else if (!Game.HasAchiev('Moistburster') || !Game.HasAchiev('Last Chance to See')) {
-            for (let i=0; i<Game.getWrinklersMax(); ++i) {
+            for (let i = 0; i < Game.getWrinklersMax(); ++i) {
                 const wrinkler = Game.wrinklers[i];
                 if (wrinkler.phase && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
             }
