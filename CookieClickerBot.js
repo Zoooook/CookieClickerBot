@@ -155,6 +155,8 @@ function testAuraMult(aura, testAura) {
 }
 
 function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
+    if (Game.hasBuff('Cursed finger')) return 0;
+
     let cookiesPs = 0;
     let mult = 1;
     //add up effect bonuses from building minigames
@@ -651,15 +653,14 @@ function doOrCalculateBestThing(){
     // Click fortunes
     if (autoClicker && Game.TickerEffect.type=='fortune') Game.tickerL.click();
 
-    currentCps = calculateTotalCps(1, defaultArgs);
-
     // Do nothing and make it really expensive, to stop spamming recalculate and focus on clicking
-    // This should only happen during Cursed finger buff
-    if (!currentCps) {
+    if (Game.hasBuff('Cursed finger')) {
         best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned+Game.cookiesReset)*1000000000};
         clog(best);
         return;
     }
+
+    currentCps = calculateTotalCps(1, defaultArgs);
 
     if (autoClicker) {
         // Harvest any ripe sugar lumps
