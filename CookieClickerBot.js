@@ -648,12 +648,20 @@ function getHighestBuilding() {
 }
 
 function doOrCalculateBestThing(){
+    // Click fortunes
+    if (autoClicker && Game.TickerEffect.type=='fortune') Game.tickerL.click();
+
     currentCps = calculateTotalCps(1, defaultArgs);
 
-    if (autoClicker) {
-        // Click fortunes
-        if (Game.TickerEffect.type=='fortune') Game.tickerL.click();
+    // Do nothing and make it really expensive, to stop spamming recalculate and focus on clicking
+    // This should only happen during Cursed finger buff
+    if (!currentCps) {
+        best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned+Game.cookiesReset)*1000000000};
+        clog(best);
+        return;
+    }
 
+    if (autoClicker) {
         // Harvest any ripe sugar lumps
         if (Date.now() - Game.lumpT >= Game.lumpRipeAge) {
             console.log('\n');
@@ -689,10 +697,9 @@ function doOrCalculateBestThing(){
             const drop = drops[Math.floor((new Date().getMinutes() / 60) * drops.length)];
             if (!Game.HasUnlocked(drop)) {
                 Game.specialTab='dragon';
-                if (l('specialPic')) {
-                    while (!Game.HasUnlocked(drop)) {
-                        Game.ClickSpecialPic();
-                    }
+                Game.ToggleSpecialMenu(1);
+                while (!Game.HasUnlocked(drop)) {
+                    Game.ClickSpecialPic();
                 }
             }
         }
@@ -859,22 +866,19 @@ function doOrCalculateBestThing(){
     console.log('Upgrades by value: ', values);
     console.log('Upgrades by name: ', things);
 
-    // During cursed finger all values are 0, don't try to calculate because buying things then doesn't increase click power anyway
-    if (values[0].value > 0) {
-        best = things[values[0].name];
-        clog(best, 'best');
+    best = things[values[0].name];
+    clog(best, 'best');
 
-        // Find better purchases for speed (sometimes by lowering prices)
-        for (let i = 1; i < values.length; ++i) {
-            const thing = things[values[i].name];
-            if (thing.price < best.price && !thing.ignore) {
-                // These are slightly inaccurate for bulk building purchases, it should be good enough though
-                const timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, best.buyCount || 1, args[thing.name])/thing.cps;
-                const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, thing.buyCount || 1, args[best.name])/best.cps;
-                if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
-                    best = thing;
-                    clog(best, 'better');
-                }
+    // Find better purchases for speed (sometimes by lowering prices)
+    for (let i = 1; i < values.length; ++i) {
+        const thing = things[values[i].name];
+        if (thing.price < best.price && !thing.ignore) {
+            // These are slightly inaccurate for bulk building purchases, it should be good enough though
+            const timeTillBothThingsIfFirst = thing.price/currentCps + calculatePrice(best.type, best.name, best.buyCount || 1, args[thing.name])/thing.cps;
+            const timeTillBothThingsIfSecond = best.price/currentCps + calculatePrice(thing.type, thing.name, thing.buyCount || 1, args[best.name])/best.cps;
+            if (timeTillBothThingsIfFirst < timeTillBothThingsIfSecond) {
+                best = thing;
+                clog(best, 'better');
             }
         }
     }
@@ -957,7 +961,8 @@ function doOrCalculateBestThing(){
 
                 things.dragon.percent = (things.dragon.cps / currentCps - 1) * 100;
                 things.dragon.value = things.dragon.percent / things.dragon.price;
-                if (Game.dragonLevel == Game.dragonLevels.length - 3) things.dragon.value /= 2; // have to buy back buildings twice, leave cost alone so we go ahead and level up once
+                // have to buy back buildings twice, leave cost alone so we go ahead and level up once
+                if (Game.dragonLevel == Game.dragonLevels.length - 3) things.dragon.value /= 2;
 
                 if (things.dragon.value > best.value) {
                     best = things.dragon;
@@ -1037,13 +1042,6 @@ function doOrCalculateBestThing(){
 
     // Set price for first building of multi building purchase
     if (best.basePrice) best.price = best.basePrice;
-
-    // Do nothing and make it really expensive, to stop spamming recalculate and focus on clicking
-    // This should only happen during Cursed finger buff
-    if (!best.name) {
-        best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned+Game.cookiesReset)*1000000000};
-        clog(best);
-    }
 }
 
 function formatTime(date) {
