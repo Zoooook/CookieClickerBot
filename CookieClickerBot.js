@@ -1,12 +1,13 @@
-// wrinkler math
+// print wrinkler math even without autoclicker
+// grab all cheap upgrades at once
 // take into account all achievements, upgrade unlocks
 // estimate long term production
+// wrinkler math
 // big upgrades switch dragon aura to master of the armory
 // print shimmer clicks, wrinklers
 // stay on christmas until all reindeer cookies
 // anticipate aura value before 200 yous
 
-// grab all cheap upgrades at once
 // find out why it's printing cheap upgrades multiple times
 // ascension -- maybe need to take into account longterm expected production, ignore buffs, also upgrade unlocks
 // save scum sugar lump harvesting
@@ -155,9 +156,7 @@ function testAuraMult(aura, testAura) {
     return 0;
 }
 
-function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
-    if (Game.hasBuff('Cursed finger')) return 0;
-
+function calculateUnbuffedBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
     let cookiesPs = 0;
     let mult = 1;
     //add up effect bonuses from building minigames
@@ -272,7 +271,6 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
 
     if (willHave('"egg"', testUpgrade)) cookiesPs += 9;
 
-
     let eggMult = 1;
     if (willHave(  'Chicken egg', testUpgrade)) eggMult *= 1.01;
     if (willHave(     'Duck egg', testUpgrade)) eggMult *= 1.01;
@@ -326,16 +324,20 @@ function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, t
     if (willHave('Magic shenanigans',  testUpgrade)) mult *= 1000;
     if (willHave('Occult obstruction', testUpgrade)) mult *= 0;
 
-    for (let i in Game.buffs) {
-        if (typeof Game.buffs[i].multCpS != 'undefined') mult *= Game.buffs[i].multCpS;
-    }
-
     return cookiesPs * mult;
 }
 
-function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade, testAura) {
-    if (Game.hasBuff('Cursed finger')) return Game.buffs['Cursed finger'].power;
+function calculateBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
+    if (Game.hasBuff('Cursed finger')) return 0;
 
+    let cookiesPs = calculateUnbuffedBaseCps(testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura);
+    for (let i in Game.buffs) {
+        if (typeof Game.buffs[i].multCpS != 'undefined') cookiesPs *= Game.buffs[i].multCpS;
+    }
+    return cookiesPs;
+}
+
+function calculateUnbuffedClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade, testAura) {
     let add = calculateCursorBaseCps(testUpgrade);
     let num = 0;
     for (let i in Game.Objects) {
@@ -376,10 +378,6 @@ function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade, te
         else if (godLvl == 3) mult *= 1.05;
     }
 
-    for (let i in Game.buffs) {
-        if (typeof Game.buffs[i].multClick != 'undefined') mult *= Game.buffs[i].multClick;
-    }
-
     mult *= 1 + testAuraMult('Dragon Cursor', testAura) * 0.05;
 
     return mult * Game.ComputeCps(
@@ -387,6 +385,20 @@ function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade, te
         willHave('Reinforced index finger', testUpgrade) + willHave('Carpal tunnel prevention cream', testUpgrade) + willHave('Ambidextrous', testUpgrade),
         add,
     );
+}
+
+function calculateClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade, testAura) {
+    if (Game.hasBuff('Cursed finger')) return Game.buffs['Cursed finger'].power;
+
+    let clickCookies = calculateUnbuffedClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade, testAura);
+    for (let i in Game.buffs) {
+        if (typeof Game.buffs[i].multClick != 'undefined') clickCookies *= Game.buffs[i].multClick;
+    }
+    return clickCookies;
+}
+
+function calculateUnbuffedClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
+    return clicksPerSecond * calculateUnbuffedClickCookies(cookiesPs, testBuy, testBuyCount, testUpgrade, testAura);
 }
 
 function calculateClickCps(cookiesPs, testBuy, testBuyCount, testUpgrade, testAchievement, testSanta, testAura) {
@@ -427,11 +439,11 @@ function calculateWrinklerBoostMultiplier(testAura) {
     return boost;
 }
 
-function calculateTotalCps(isDefault, args) {
+function calculateTotalCps(logCps, unbuffed, args) {
     if (trueClicksPerSecond) {
         clicksPerSecond = clickCount * 1000 / (now - clickCountStart);
 
-        if (isDefault) {
+        if (logCps) {
             console.log('\n');
             if (Object.keys(Game.buffs).length) console.log('   ', Object.keys(Game.buffs).join(', '));
             clicksPerSecondShort = clickCountShort * 1000 / (now - clickCountShortStart);
@@ -440,8 +452,15 @@ function calculateTotalCps(isDefault, args) {
         }
     }
 
-    const baseCps = calculateBaseCps(...args);
-    const clickCps = calculateClickCps(baseCps, ...args);
+    let baseCps;
+    let clickCps;
+    if (unbuffed) {
+        baseCps = calculateUnbuffedBaseCps(...args);
+        clickCps = calculateUnbuffedClickCps(baseCps, ...args);
+    } else {
+        baseCps = calculateBaseCps(...args);
+        clickCps = calculateClickCps(baseCps, ...args);
+    }
     const totalCps = baseCps + clickCps;
 
     const numWrinklers = countWrinklers()
@@ -451,7 +470,7 @@ function calculateTotalCps(isDefault, args) {
         const apparentPassiveCps = baseCps * witheredMultiplier;
         const apparentTotalCps = apparentPassiveCps + clickCps;
 
-        if (isDefault && trueClicksPerSecond) {
+        if (logCps && trueClicksPerSecond) {
             const boostedMultiplier = calculateWrinklerBoostMultiplier(args[5]);
             const actualPassiveCps = baseCps * boostedMultiplier;
             const actualTotalCps = actualPassiveCps + clickCps;
@@ -469,7 +488,7 @@ function calculateTotalCps(isDefault, args) {
 
         return apparentTotalCps;
     } else {
-        if (isDefault && trueClicksPerSecond) {
+        if (logCps && trueClicksPerSecond) {
             console.log('    ' + totalCps.toPrecision(4) + ' cookies/second');
             console.log('    ' + (100 * clickCps / totalCps).toFixed(1) + '% of cookie production is due to autoclicker');
         }
@@ -614,7 +633,7 @@ function createMultiBuildingThing(args) {
         type: 'building',
         name: args[0],
         buyCount: args[1],
-        cps: calculateTotalCps(0, args),
+        cps: calculateTotalCps(0, 0, args),
         basePrice: calculateBuildingPrice(args[0], ...defaultArgs),
     };
     thing.percent = (thing.cps / currentCps - 1) * 100;
@@ -636,7 +655,7 @@ function findBestAura(testBuy, testBuyCount) {
     for (let i = 0; i < auras.length; ++i) {
         const aura = auras[i];
         if (Game.dragonLevel < aura.level) break;
-        aura.cps = calculateTotalCps(0, dragonArgs.concat(aura.name));
+        aura.cps = calculateTotalCps(0, 0, dragonArgs.concat(aura.name));
         if (aura.cps > bestAura.cps) bestAura = aura;
     }
     return bestAura;
@@ -661,7 +680,7 @@ function doOrCalculateBestThing(){
         return;
     }
 
-    currentCps = calculateTotalCps(1, defaultArgs);
+    currentCps = calculateTotalCps(1, 0, defaultArgs);
 
     if (autoClicker) {
         // Harvest any ripe sugar lumps
@@ -790,7 +809,7 @@ function doOrCalculateBestThing(){
                 return;
             } else {
                 args[upgrade.name] = ['', 0, upgrade.name, 0, 0, ''];
-                things[upgrade.name] = {type: 'upgrade', name: upgrade.name, cps: calculateTotalCps(0, args[upgrade.name]), price: upgradePrice};
+                things[upgrade.name] = {type: 'upgrade', name: upgrade.name, cps: calculateTotalCps(0, 0, args[upgrade.name]), price: upgradePrice};
                 things[upgrade.name].percent = (things[upgrade.name].cps / currentCps - 1) * 100;
                 things[upgrade.name].value = things[upgrade.name].percent / things[upgrade.name].price;
             }
@@ -809,7 +828,7 @@ function doOrCalculateBestThing(){
         things[building.name] = {
             type: 'building',
             name: building.name,
-            cps: calculateTotalCps(0, args[building.name]),
+            cps: calculateTotalCps(0, 0, args[building.name]),
             price: calculateBuildingPrice(building.name, ...defaultArgs),
         };
         things[building.name].percent = (things[building.name].cps / currentCps - 1) * 100;
@@ -913,7 +932,7 @@ function doOrCalculateBestThing(){
             things.santa = {
                 type: 'upgrade',
                 name: 'santa',
-                cps: calculateTotalCps(0, args.santa),
+                cps: calculateTotalCps(0, 0, args.santa),
                 price: santaPrice,
             };
             things.santa.percent = (things.santa.cps / currentCps - 1) * 100;
