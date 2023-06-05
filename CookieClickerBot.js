@@ -1024,7 +1024,7 @@ function doOrCalculateBestThing(){
     if (best.basePrice) best.price = best.basePrice;
 
     // Pop the n biggest wrinklers if we're unbuffed and more than n hours away from buying and have all wrinklers, and this will get us there
-    if (Object.keys(Game.buffs).length || Game.shimmerTypes['golden'].chain) return;
+    if (!autoClicker || !autoBuyer || Object.keys(Game.buffs).length || Game.shimmerTypes['golden'].chain) return;
 
     const wrinklers = [];
     for (let i = 0; i < Game.getWrinklersMax(); ++i) {
