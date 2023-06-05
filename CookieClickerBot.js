@@ -1,8 +1,6 @@
-// print wrinkler math even without autoclicker
 // grab all cheap upgrades at once
 // take into account all achievements, upgrade unlocks
 // estimate long term production
-// wrinkler math
 // big upgrades switch dragon aura to master of the armory
 // print shimmer clicks, wrinklers
 // stay on christmas until all reindeer cookies
@@ -675,7 +673,7 @@ function doOrCalculateBestThing(){
 
     if (Game.hasBuff('Cursed finger')) {
         // Do nothing and make it really expensive, to stop spamming recalculate and focus on clicking
-        best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned+Game.cookiesReset)*1000000000};
+        best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned + Game.cookiesReset) * 1000000000};
         clog(best);
         return;
     }
@@ -1022,47 +1020,46 @@ function doOrCalculateBestThing(){
         }
     }
 
-    // Pop biggest wrinkler if best purchase is more than an hour out at base Cps, and wrinklers will get there
-    // There's some complicated math to do to check if this is actually worth it
-    // It may be best to just never pop wrinklers until ascension
-    // Also this is bugged anyway because popping a wrinkler will bring us under an hour and we won't finish popping them
-    /*
-    if (!Game.buffs.length) {
-        let bestWrinkler = -1;
-        let bestWrinklerSucked = 0;
-        let totalSucked = 0;
-
-        let toSuck = 1.1;
-        if (Game.Has('Sacrilegious corruption')) toSuck *= 1.05;
-        if (Game.Has('Wrinklerspawn')) toSuck *= 1.05;
-        if (Game.hasGod) {
-            const    godLvl = Game.hasGod('scorn');
-            if      (godLvl == 1) toSuck *= 1.15;
-            else if (godLvl == 2) toSuck *= 1.1;
-            else if (godLvl == 3) toSuck *= 1.05;
-        }
-
-        for (let i=0; i<Game.getWrinklersMax(); ++i) {
-            const wrinkler = Game.wrinklers[i];
-            if (!wrinkler.type) {
-                totalSucked += wrinkler.sucked;
-                if (wrinkler.sucked > bestWrinklerSucked) {
-                    bestWrinkler = i;
-                    bestWrinklerSucked = wrinkler.sucked;
-                }
-            }
-        }
-
-        const cookieDiff = best.price - Game.cookies;
-        if (totalSucked*toSuck >= cookieDiff && cookieDiff > currentCps * 60 * 60) {
-            best = {type: 'wrinkler', name: bestWrinkler.toString(), price: 0};
-            clog(best);
-        }
-    }
-    */
-
     // Set price for first building of multi building purchase
     if (best.basePrice) best.price = best.basePrice;
+
+    // Pop the n biggest wrinklers if we're unbuffed and more than n hours away from buying and have all wrinklers, and this will get us there
+    if (Object.keys(Game.buffs).length || Game.shimmerTypes['golden'].chain) return;
+
+    const wrinklers = [];
+    for (let i = 0; i < Game.getWrinklersMax(); ++i) {
+        const wrinkler = Game.wrinklers[i];
+        if (wrinkler.phase < 2) return;
+        if (!wrinkler.type) wrinklers.push(wrinkler);
+    }
+    wrinklers.sort((a,b) => { return b.sucked - a.sucked; });
+
+    const wrinklerThreshold = currentCps * 60 * 60;
+
+    let suckMult = 1.1;
+    if (Game.Has('Sacrilegious corruption')) suckMult *= 1.05;
+    if (Game.auraMult('Dragon Guts')) suckMult *= 1.2;
+    if (Game.Has('Wrinklerspawn')) suckMult *= 1.05;
+    if (Game.hasGod) {
+        const godLvl = Game.hasGod('scorn');
+        if      (godLvl == 1) suckMult *= 1.15;
+        else if (godLvl == 2) suckMult *= 1.1;
+        else if (godLvl == 3) suckMult *= 1.05;
+    }
+
+    let sucked = 0;
+    for (let i = 0; i < wrinklers.length; ++i) {
+        if (Game.cookies + wrinklerThreshold * (i + 1) >= best.price) return;
+        const wrinkler = wrinklers[i];
+        sucked += wrinkler.sucked * suckMult;
+        if (Game.cookies + sucked >= best.price) {
+            for (let j = 0; j <= i; ++j) {
+                wrinklers[j].hp = -10;
+                console.log(`Popped a wrinkler for ${(wrinklers[j].sucked * suckMult).toPrecision(4)} cookies`);
+            }
+            return;
+        }
+    }
 }
 
 function formatTime(date) {
@@ -1070,7 +1067,7 @@ function formatTime(date) {
 }
 
 function playTheGame() {
-    if (autoBuyer && best.name && Game.cookies >= best.price) {
+    if (autoBuyer && best.name && Game.cookies >= best.price && best.name != 'nothing') {
         if (best.type == 'building'){
             if (best.price < Game.cookies/1000000) Game.Objects[best.name].buy(50);
             else if (best.price < Game.cookies/1000) Game.Objects[best.name].buy(10);

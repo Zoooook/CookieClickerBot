@@ -4,7 +4,7 @@ By default all it does is calculate the best thing to buy and print it in the co
 
 The start() function also takes arguments for these. To only turn on the autoclicker, type start(1, 0). To only turn on the autobuyer, type start(0, 1). To turn on both, type start(1, 1). To stop the add-on entirely, type stop().
 
-The autoclicker clicks the cookie, golden cookies, reindeer, sugar lumps, etc., and gets various other achievements. It also changes the season to get drops.
+The autoclicker clicks the cookie, golden cookies, reindeer, sugar lumps, etc., and gets various other achievements. It also changes the season to get drops. It clicks fastest if you close the dev tools and make the window as small as possible.
 
 The autobuyer buys buildings and upgrades, including Krumblor and Santa upgrades.
 
