@@ -1,4 +1,4 @@
-This add-on plays Cookie Clicker. Copy the contents of CookieClickerBot.js into the console in your browser (F12) and press Enter.
+This add-on plays Cookie Clicker. Copy the contents of CookieClickerBot.js into the console in your browser (F12) and press Enter. The Firefox console is extremely laggy and badly formatted, use Chrome.
 
 By default all it does is calculate the best thing to buy and print it in the console. It also has auto-buy and auto-click functionality, which you can toggle individually by typing startBuying(), stopBuying(), startClicking(), or stopClicking() into the console.
 
