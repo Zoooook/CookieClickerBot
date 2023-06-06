@@ -1,12 +1,8 @@
-// grab all cheap upgrades at once
 // take into account all achievements, upgrade unlocks
 // estimate long term production
 // big upgrades switch dragon aura to master of the armory
-// print shimmer clicks, wrinklers
-// stay on christmas until all reindeer cookies
 // anticipate aura value before 200 yous
 
-// find out why it's printing cheap upgrades multiple times
 // ascension -- maybe need to take into account longterm expected production, ignore buffs, also upgrade unlocks
 // save scum sugar lump harvesting
 // minigames, level objects
@@ -437,17 +433,14 @@ function calculateWrinklerBoostMultiplier(testAura) {
     return boost;
 }
 
-function calculateTotalCps(logCps, unbuffed, args) {
-    if (trueClicksPerSecond) {
+function calculateTotalCps(calculateCps, unbuffed, args) {
+    if (trueClicksPerSecond && calculateCps) {
         clicksPerSecond = clickCount * 1000 / (now - clickCountStart);
-
-        if (logCps) {
-            console.log('\n');
-            if (Object.keys(Game.buffs).length) console.log('   ', Object.keys(Game.buffs).join(', '));
-            clicksPerSecondShort = clickCountShort * 1000 / (now - clickCountShortStart);
-            console.log('    ' + clicksPerSecondShort.toFixed(1) + ' clicks/second from ' + formatTime(clickCountShortStart) + ' to ' + formatTime(now));
-            console.log('    ' + clicksPerSecond.toFixed(1) + ' clicks/second from ' + formatTime(clickCountStart) + ' to ' + formatTime(now));
-        }
+        console.log('\n');
+        if (Object.keys(Game.buffs).length) console.log('   ', Object.keys(Game.buffs).join(', '));
+        clicksPerSecondShort = clickCountShort * 1000 / (now - clickCountShortStart);
+        console.log('    ' + clicksPerSecondShort.toFixed(1) + ' clicks/second from ' + formatTime(clickCountShortStart) + ' to ' + formatTime(now));
+        console.log('    ' + clicksPerSecond.toFixed(1) + ' clicks/second from ' + formatTime(clickCountStart) + ' to ' + formatTime(now));
     }
 
     let baseCps;
@@ -468,7 +461,7 @@ function calculateTotalCps(logCps, unbuffed, args) {
         const apparentPassiveCps = baseCps * witheredMultiplier;
         const apparentTotalCps = apparentPassiveCps + clickCps;
 
-        if (logCps && trueClicksPerSecond) {
+        if (calculateCps && trueClicksPerSecond) {
             const boostedMultiplier = calculateWrinklerBoostMultiplier(args[5]);
             const actualPassiveCps = baseCps * boostedMultiplier;
             const actualTotalCps = actualPassiveCps + clickCps;
@@ -486,7 +479,7 @@ function calculateTotalCps(logCps, unbuffed, args) {
 
         return apparentTotalCps;
     } else {
-        if (logCps && trueClicksPerSecond) {
+        if (calculateCps && trueClicksPerSecond) {
             console.log('    ' + totalCps.toPrecision(4) + ' cookies/second');
             console.log('    ' + (100 * clickCps / totalCps).toFixed(1) + '% of cookie production is due to autoclicker');
         }
@@ -669,7 +662,10 @@ function getHighestBuilding() {
 
 function doOrCalculateBestThing(){
     // Click fortunes
-    if (autoClicker && Game.TickerEffect.type=='fortune') Game.tickerL.click();
+    if (autoClicker && Game.TickerEffect.type=='fortune') {
+        Game.tickerL.click();
+        console.log('Clicked a fortune');
+    }
 
     if (Game.hasBuff('Cursed finger')) {
         // Do nothing and make it really expensive, to stop spamming recalculate and focus on clicking
@@ -692,14 +688,20 @@ function doOrCalculateBestThing(){
         if (['easter', 'halloween'].includes(Game.season)) {
             for (let i = 0; i < Game.getWrinklersMax(); ++i) {
                 const wrinkler = Game.wrinklers[i];
-                if (wrinkler.phase == 2 && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
+                if (wrinkler.phase == 2 && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) {
+                    wrinkler.hp = -10;
+                    console.log(`Popped a wrinkler for ${Game.season} drops`);
+                }
             }
         }
         // Pop wrinklers for achievements
         else if (!Game.HasAchiev('Moistburster') || !Game.HasAchiev('Last Chance to See')) {
             for (let i = 0; i < Game.getWrinklersMax(); ++i) {
                 const wrinkler = Game.wrinklers[i];
-                if (wrinkler.phase && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) wrinkler.hp = -10;
+                if (wrinkler.phase && (!wrinkler.type || !Game.HasAchiev('Last Chance to See'))) {
+                    wrinkler.hp = -10;
+                    console.log('Popped a wrinkler for achievements');
+                }
             }
         }
 
@@ -719,6 +721,7 @@ function doOrCalculateBestThing(){
                 Game.ToggleSpecialMenu(1);
                 while (!Game.HasUnlocked(drop)) {
                     Game.ClickSpecialPic();
+                    console.log('Pet the dragon');
                 }
             }
         }
@@ -730,9 +733,9 @@ function doOrCalculateBestThing(){
                 console.log('\n');
                 clog(best);
                 return;
-            } else if (Game.dragonLevel < 14 || Game.dragonLevel == Game.dragonLevels.length - 1) {
-                const bestAura = findBestAura(getHighestBuilding(), -1);
-                if (!Game.hasAura(bestAura.name)) {
+            } else if (Game.dragonLevel >= 5 && Game.dragonLevel < 14 || Game.dragonLevel == Game.dragonLevels.length - 1) {
+                const bestAura = findBestAura(getHighestBuilding().name || '', -1);
+                if (bestAura.name && !Game.hasAura(bestAura.name)) {
                     best = {type: 'aura', name: bestAura.name, cps: bestAura.cps, price: 0, percent: (bestAura.cps / currentCps - 1) * 100};
                     console.log('\n');
                     clog(best);
@@ -754,25 +757,33 @@ function doOrCalculateBestThing(){
     let args = {};
     console.log('\n');
 
-    const hasLovelyCookies = Game.Has(   'Pure heart biscuits') &&
-                             Game.Has( 'Ardent heart biscuits') &&
-                             Game.Has(   'Sour heart biscuits') &&
-                             Game.Has('Weeping heart biscuits') &&
-                             Game.Has( 'Golden heart biscuits') &&
-                             Game.Has('Eternal heart biscuits') &&
-                             Game.Has(  'Prism heart biscuits');
-    const hasSpookyCookies = Game.Has(  'Skull cookies') &&
-                             Game.Has(  'Ghost cookies') &&
-                             Game.Has(    'Bat cookies') &&
-                             Game.Has(  'Slime cookies') &&
-                             Game.Has('Pumpkin cookies') &&
-                             Game.Has('Eyeball cookies') &&
-                             Game.Has( 'Spider cookies');
+    const hasChristmasCookies = Game.Has('Christmas tree biscuits') &&
+                                Game.Has(     'Snowflake biscuits') &&
+                                Game.Has(       'Snowman biscuits') &&
+                                Game.Has(         'Holly biscuits') &&
+                                Game.Has(    'Candy cane biscuits') &&
+                                Game.Has(          'Bell biscuits') &&
+                                Game.Has(       'Present biscuits');
+    const hasValentineCookies = Game.Has(    'Pure heart biscuits') &&
+                                Game.Has(  'Ardent heart biscuits') &&
+                                Game.Has(    'Sour heart biscuits') &&
+                                Game.Has( 'Weeping heart biscuits') &&
+                                Game.Has(  'Golden heart biscuits') &&
+                                Game.Has( 'Eternal heart biscuits') &&
+                                Game.Has(   'Prism heart biscuits');
+    const hasHalloweenCookies = Game.Has(  'Skull cookies') &&
+                                Game.Has(  'Ghost cookies') &&
+                                Game.Has(    'Bat cookies') &&
+                                Game.Has(  'Slime cookies') &&
+                                Game.Has('Pumpkin cookies') &&
+                                Game.Has('Eyeball cookies') &&
+                                Game.Has( 'Spider cookies');
     let eggs = 0;
     for (let i in Game.easterEggs) {
         if (Game.HasUnlocked(Game.easterEggs[i])) eggs++;
     }
 
+    let boughtCheap = 0;
     for (let i in Game.UpgradesInStore) {
         const upgrade = Game.UpgradesInStore[i];
 
@@ -782,11 +793,11 @@ function doOrCalculateBestThing(){
 
         // Activate optimal season
         else if (autoClicker && (
-            upgrade.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                           && Game.santaLevel  < 14 && Game.Has('Titanium mouse') ||
-            upgrade.name == 'Lovesick biscuit' && Game.season != 'valentines'                                   && !hasLovelyCookies && Game.santaLevel == 14 && Game.Has('Fantasteel mouse') ||
-            upgrade.name ==    'Bunny biscuit' && Game.season != 'easter'                         && eggs  < 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
-            upgrade.name ==  'Ghostly biscuit' && Game.season != 'halloween' && !hasSpookyCookies && eggs == 20 &&  hasLovelyCookies && Game.santaLevel == 14                                 ||
-            upgrade.name ==  'Festive biscuit' && Game.season != 'christmas' &&  hasSpookyCookies && eggs == 20 &&  hasLovelyCookies
+            upgrade.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                                      && Game.santaLevel  < 14 && Game.Has(  'Titanium mouse') ||
+            upgrade.name == 'Lovesick biscuit' && Game.season != 'valentines'                                      && !hasValentineCookies && hasChristmasCookies && Game.santaLevel == 14 && Game.Has('Fantasteel mouse') ||
+            upgrade.name ==    'Bunny biscuit' && Game.season != 'easter'                            && eggs  < 20 &&  hasValentineCookies && hasChristmasCookies && Game.santaLevel == 14                                 ||
+            upgrade.name ==  'Ghostly biscuit' && Game.season != 'halloween' && !hasHalloweenCookies && eggs == 20 &&  hasValentineCookies && hasChristmasCookies && Game.santaLevel == 14                                 ||
+            upgrade.name ==  'Festive biscuit' && Game.season != 'christmas' &&  hasHalloweenCookies && eggs == 20 &&  hasValentineCookies
         )) {
             best = {type: 'upgrade', name: upgrade.name, percent: 0, value: 0};
             best.price = calculateUpgradePrice(upgrade.name, ...defaultArgs);
@@ -802,9 +813,11 @@ function doOrCalculateBestThing(){
 
             // Buy cheap upgrades, don't waste time calculating
             if (upgradePrice < Game.cookies/1000000) {
-                best = {type: 'upgrade', name: upgrade.name, price: upgradePrice}
-                clog(best, 'cheap');
-                return;
+                clog({type: 'upgrade', name: upgrade.name, price: upgradePrice}, 'cheap');
+                if (autoBuyer) {
+                    upgrade.buy(1);
+                    boughtCheap = 1;
+                }
             } else {
                 args[upgrade.name] = ['', 0, upgrade.name, 0, 0, ''];
                 things[upgrade.name] = {type: 'upgrade', name: upgrade.name, cps: calculateTotalCps(0, 0, args[upgrade.name]), price: upgradePrice};
@@ -819,6 +832,7 @@ function doOrCalculateBestThing(){
             upgrade.name == 'Revoke Elder Covenant'
         ) things[upgrade.name] = {type: 'upgrade', name: upgrade.name, price: calculateUpgradePrice(upgrade.name, ...defaultArgs), ignore: 1};
     }
+    if (boughtCheap) return;
 
     for (let i in Game.Objects) {
         const building = Game.Objects[i];
@@ -1092,8 +1106,10 @@ function playTheGame() {
         else if (best.type == 'sell') Game.Objects[best.name].sell(1);
 
         best = {};
-    } else if (autoClicker && Game.shimmers.length && (!Game.HasAchiev('Early bird') || Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) Game.shimmers[0].pop();
-    else if (!best.name) {
+    } else if (autoClicker && Game.shimmers.length && (!Game.HasAchiev('Early bird') || Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) {
+        console.log(`Popped a ${Game.shimmers[0].type.replace('golden', 'cookie')}`);
+        Game.shimmers[0].pop();
+    } else if (!best.name) {
         if (restoreHeight && Game.HasAchiev('Cookie-dunker')) {
             Game.LeftBackground.canvas.height = restoreHeight;
             restoreHeight = 0;
