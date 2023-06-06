@@ -82,7 +82,7 @@ function calculateCursorCps(testBuy, testBuyCount, testUpgrade) {
     return Game.ComputeCps(
         0.1,
         willHave('Reinforced index finger', testUpgrade) + willHave('Carpal tunnel prevention cream', testUpgrade) + willHave('Ambidextrous', testUpgrade),
-        add
+        add,
     ) * mult;
 }
 
@@ -342,7 +342,7 @@ function calculateUnbuffedClickCookies(cookiesPs, testBuy, testBuyCount, testUpg
         num += amount(Game.Objects[i], testBuy, testBuyCount);
     }
     num -= amount(Game.Objects['Cursor'], testBuy, testBuyCount);
-    add = add * num;
+    add *= num;
 
     if (willHave(      'Plastic mouse', testUpgrade)) add += cookiesPs*0.01;
     if (willHave(         'Iron mouse', testUpgrade)) add += cookiesPs*0.01;
@@ -414,15 +414,15 @@ function countWrinklers() {
 function calculateWrinklerBoostMultiplier(testAura) {
     const witheredProportion = countWrinklers() * Game.eff('wrinklerEat') / 20;
 
-    let mult = witheredProportion * 1.1;
-    if (Game.Has('Sacrilegious corruption')) mult *= 1.05;
-    if (Game.Has('Wrinklerspawn'))           mult *= 1.05;
-    mult *= 1 + testAuraMult('Dragon Guts', testAura) * 0.2;
+    let suckMult = witheredProportion * 1.1;
+    if (Game.Has('Sacrilegious corruption')) suckMult *= 1.05;
+    if (Game.Has('Wrinklerspawn'))           suckMult *= 1.05;
+    if (Game.auraMult('Dragon Guts'))        suckMult *= 1.2;
     if (Game.hasGod) {
         const godLvl = Game.hasGod('scorn');
-        if      (godLvl == 1) mult *= 1.15;
-        else if (godLvl == 2) mult *= 1.1;
-        else if (godLvl == 3) mult *= 1.05;
+        if      (godLvl == 1) suckMult *= 1.15;
+        else if (godLvl == 2) suckMult *= 1.1;
+        else if (godLvl == 3) suckMult *= 1.05;
     }
 
     let boost = 1;
@@ -430,8 +430,8 @@ function calculateWrinklerBoostMultiplier(testAura) {
         const wrinkler = Game.wrinklers[i];
         if (wrinkler.phase == 2) {
             boost -= .05;
-            if (wrinkler.type==1) boost += 3*mult;
-            else boost += mult;
+            if (wrinkler.type==1) boost += 3 * suckMult;
+            else boost += suckMult;
         }
     }
     return boost;
@@ -673,7 +673,7 @@ function doOrCalculateBestThing(){
 
     if (Game.hasBuff('Cursed finger')) {
         // Do nothing and make it really expensive, to stop spamming recalculate and focus on clicking
-        best = {type: 'nothing', name: 'nothing', price: (Game.cookiesEarned + Game.cookiesReset) * 1000000000};
+        best = {type: 'nothing', name: 'Cursed finger', price: (Game.cookiesEarned + Game.cookiesReset) * 1000000000};
         clog(best);
         return;
     }
@@ -1038,8 +1038,8 @@ function doOrCalculateBestThing(){
 
     let suckMult = 1.1;
     if (Game.Has('Sacrilegious corruption')) suckMult *= 1.05;
-    if (Game.auraMult('Dragon Guts')) suckMult *= 1.2;
-    if (Game.Has('Wrinklerspawn')) suckMult *= 1.05;
+    if (Game.Has('Wrinklerspawn'))           suckMult *= 1.05;
+    if (Game.auraMult('Dragon Guts'))        suckMult *= 1.2;
     if (Game.hasGod) {
         const godLvl = Game.hasGod('scorn');
         if      (godLvl == 1) suckMult *= 1.15;
@@ -1067,7 +1067,7 @@ function formatTime(date) {
 }
 
 function playTheGame() {
-    if (autoBuyer && best.name && Game.cookies >= best.price && best.name != 'nothing') {
+    if (autoBuyer && best.name && Game.cookies >= best.price && best.type != 'nothing') {
         if (best.type == 'building'){
             if (best.price < Game.cookies/1000000) Game.Objects[best.name].buy(50);
             else if (best.price < Game.cookies/1000) Game.Objects[best.name].buy(10);
