@@ -1,5 +1,8 @@
+// redraw cookie after dunk
+// get more achievements
 // take into account all achievements, upgrade unlocks
 // estimate long term production
+// calculate when season switcher is still worth it
 // big upgrades switch dragon aura to master of the armory
 // anticipate aura value before 200 yous
 
@@ -727,7 +730,7 @@ function doOrCalculateBestThing(){
         }
 
         // Set aura (sacrifice a building) before any more buildings are built
-        if (autoBuyer && Game.Has('A crumbly egg')) {
+        if (autoBuyer && Game.Has('A crumbly egg') && bulkBuy == 1) {
             if (Game.dragonLevel >= 14 && !Game.hasAura('Dragonflight')) {
                 best = {type: 'aura', name: 'Dragonflight', price: 0};
                 console.log('\n');
@@ -812,7 +815,7 @@ function doOrCalculateBestThing(){
             const upgradePrice = calculateUpgradePrice(upgrade.name, ...defaultArgs);
 
             // Buy cheap upgrades, don't waste time calculating
-            if (upgradePrice < Game.cookies/1000000) {
+            if (upgradePrice < Game.cookies / 1000000) {
                 clog({type: 'upgrade', name: upgrade.name, price: upgradePrice}, 'cheap');
                 if (autoBuyer) {
                     upgrade.buy(1);
@@ -1083,9 +1086,11 @@ function formatTime(date) {
 function playTheGame() {
     if (autoBuyer && best.name && Game.cookies >= best.price && best.type != 'nothing') {
         if (best.type == 'building'){
-            if (best.price < Game.cookies/1000000) Game.Objects[best.name].buy(50);
-            else if (best.price < Game.cookies/1000) Game.Objects[best.name].buy(10);
-            else Game.Objects[best.name].buy(1);
+            if (best.price < Game.cookies / 1000000) bulkBuy = 50;
+            else if (best.price < Game.cookies / 1000) bulkBuy = 10;
+            else bulkBuy = 1;
+            Game.Objects[best.name].buy(bulkBuy);
+            if (bulkBuy > 1) console.log(`Bought ${bulkBuy} ${best.name}`);
         } else if (best.type == 'upgrade') {
             if (['santa', 'dragon'].includes(best.name)) {
                 Game.specialTab = best.name;
@@ -1096,8 +1101,11 @@ function playTheGame() {
             Game.specialTab = 'dragon';
             Game.ToggleSpecialMenu(1);
 
-            const highestBuilding=getHighestBuilding();
-            if (highestBuilding.id) Game.ObjectsById[highestBuilding.id].sacrifice(1);
+            const highestBuilding = getHighestBuilding();
+            if (highestBuilding.id) {
+                Game.ObjectsById[highestBuilding.id].sacrifice(1);
+                console.log(`Sacrificed a ${highestBuilding.name}`);
+            }
 
             const dragonAura = Object.values(Game.dragonAuras).find(aura => {return aura.name == best.name}).id;
             if (Game.dragonLevel == Game.dragonLevels.length - 1 && best.name != 'Dragonflight') Game.dragonAura2 = dragonAura;
@@ -1159,7 +1167,8 @@ let gameReincarnate = Game.Reincarnate;
 let insertedAscendHooks;
 let botInterval;
 let best;
-let autoBuyer = 1;
+let autoBuyer;
+let bulkBuy = 1;
 let restoreHeight;
 let now;
 let autoClicker;
