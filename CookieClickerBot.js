@@ -1,3 +1,5 @@
+// user input override buy
+// stop() should remove hooks
 // redraw cookie after dunk
 // get more achievements
 // take into account all achievements, upgrade unlocks
@@ -805,6 +807,10 @@ function doOrCalculateBestThing(){
             best = {type: 'upgrade', name: upgrade.name, percent: 0, value: 0};
             best.price = calculateUpgradePrice(upgrade.name, ...defaultArgs);
             clog(best, 'season');
+            if (Game.cookies >= best.price) {
+                Game.Upgrades[best.name].buy(1);
+                best = {};
+            }
             return;
         }
 
