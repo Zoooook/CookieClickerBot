@@ -1,5 +1,5 @@
 // user input override buy
-// stop() should remove hooks
+// prioritize fortunes over corresponding building
 // redraw cookie after dunk
 // get more achievements
 // take into account all achievements, upgrade unlocks
@@ -798,10 +798,10 @@ function doOrCalculateBestThing(){
 
         // Activate optimal season
         else if (autoClicker && (
-            upgrade.name ==  'Festive biscuit' && Game.season != 'christmas'                                                                                      && Game.santaLevel  < 14 && Game.Has(  'Titanium mouse') ||
-            upgrade.name == 'Lovesick biscuit' && Game.season != 'valentines'                                      && !hasValentineCookies && hasChristmasCookies && Game.santaLevel == 14 && Game.Has('Fantasteel mouse') ||
-            upgrade.name ==    'Bunny biscuit' && Game.season != 'easter'                            && eggs  < 20 &&  hasValentineCookies && hasChristmasCookies && Game.santaLevel == 14                                 ||
-            upgrade.name ==  'Ghostly biscuit' && Game.season != 'halloween' && !hasHalloweenCookies && eggs == 20 &&  hasValentineCookies && hasChristmasCookies && Game.santaLevel == 14                                 ||
+            upgrade.name ==  'Festive biscuit' && Game.season != 'christmas'                                                               && (!hasChristmasCookies || Game.santaLevel <  14) && Game.Has(  'Titanium mouse') ||
+            upgrade.name == 'Lovesick biscuit' && Game.season != 'valentines'                                      && !hasValentineCookies &&   hasChristmasCookies && Game.santaLevel == 14  && Game.Has('Fantasteel mouse') ||
+            upgrade.name ==    'Bunny biscuit' && Game.season != 'easter'                            && eggs  < 20 &&  hasValentineCookies &&   hasChristmasCookies && Game.santaLevel == 14                                  ||
+            upgrade.name ==  'Ghostly biscuit' && Game.season != 'halloween' && !hasHalloweenCookies && eggs == 20 &&  hasValentineCookies &&   hasChristmasCookies && Game.santaLevel == 14                                  ||
             upgrade.name ==  'Festive biscuit' && Game.season != 'christmas' &&  hasHalloweenCookies && eggs == 20 &&  hasValentineCookies
         )) {
             best = {type: 'upgrade', name: upgrade.name, percent: 0, value: 0};
@@ -1310,6 +1310,9 @@ function stopBuying() {
 function stop() {
     stopClicking();
     stopBuying();
+    Game.Ascend = gameAscend;
+    Game.Reincarnate = gameReincarnate;
+    insertedAscendHooks = 0;
     pause();
 }
 
