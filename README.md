@@ -12,6 +12,6 @@ The autoclicker clicks the cookie, golden cookies, reindeer, sugar lumps, etc., 
 
 Dragon auras will only be set if the autoclicker and autobuyer are both active.
 
-buy('thingName') will set a user override to buy the thing you specify before most other buildings or upgrades. It activates the autobuyer, but reverts to its previous state after your override is bought. You can use this function multiple times to queue up multiple buys. stopBuying() clears this override.
+buy('thingName') will set a user override to buy the thing you specify before most other buildings or upgrades. It activates the autobuyer, but reverts to its previous state after your override is bought. You can use this function multiple times to queue up multiple buys. You can see this list in the userBuy variable. stopBuying() clears this override.
 
 This add-on does not do ascensions or play mini-games.
