@@ -1133,6 +1133,10 @@ function playTheGame() {
     }
 
     now = new Date();
+    if (autoClicker && !extraClicker) {
+        while (now - Game.lastClick < 20) now = new Date();
+    }
+
     const nowSeconds = now.getSeconds();
 
     if (recalculate && !(nowSeconds % 10)) {
@@ -1170,15 +1174,17 @@ function playTheGame() {
 
 let gameAscend = Game.Ascend;
 let gameReincarnate = Game.Reincarnate;
+let gameClickCookie = Game.ClickCookie;
 let insertedAscendHooks;
 let botInterval;
+let clickIntervals = [];
 let best;
 let autoBuyer;
 let bulkBuy = 1;
 let restoreHeight;
 let now;
 let autoClicker;
-let removedRateLimiter;
+let extraClicker;
 let recalculate;
 let clickCountFlag;
 let clickCountStart;
@@ -1208,17 +1214,6 @@ function initializeAutoClicker() {
     Game.prefs.format = 0;
     Game.prefs.notScary = 1;
 
-    if (!removedRateLimiter) {
-        Game.ClickCookie = new Function(
-            'e',
-            'amount',
-            Game.ClickCookie.toString()
-                .replace(/^function\(e,amount\)\n\t\t\{/, '')
-                .replace(':1)===0?3:50))', ':1)===0?3:1001))')
-                .replace(/\}$/,''),
-        );
-        removedRateLimiter = 1;
-    }
     Game.Win('Cheated cookies taste awful');
     Game.ClickTinyCookie();
     Game.bakeryNameSet('orteil');
@@ -1230,6 +1225,38 @@ function initializeAutoClicker() {
         restoreHeight = Game.LeftBackground.canvas.height;
         Game.LeftBackground.canvas.height = 0;
     }
+}
+
+function removeRateLimiter() {
+    Game.ClickCookie = new Function(
+        'e',
+        'amount',
+        Game.ClickCookie.toString()
+            .replace(/^function( anonymous)?\(e,amount\n?\)(\n\t\t)? ?\{\n/, '')
+            .replace(' || now-Game.lastClick<1000/((e?e.detail:1)===0?3:50)', '')
+            .replace(/\n?\}$/,''),
+    );
+}
+
+function extraClick() {
+    if (autoClicker) {
+        Game.ClickCookie();
+        ++clickCount;
+        ++clickCountShort;
+    }
+}
+
+function stopExtraClicking() {
+    extraClicker = 0;
+    Game.ClickCookie = gameClickCookie;
+    for (let i = 0; i < 8; ++i) clearInterval(clickIntervals[i])
+}
+
+function startExtraClicking() {
+    stopExtraClicking();
+    extraClicker = 1;
+    removeRateLimiter();
+    for (let i = 0; i < 8; ++i) clickIntervals[i] = setInterval(extraClick);
 }
 
 function resetClickCount() {
@@ -1247,7 +1274,7 @@ function resetClickCount() {
     clickCountShortSaved = 0;
 }
 
-function start(autoClick, autoBuy) {
+function start(autoBuy, autoClick, extraClick) {
     Game.Win('Third-party');
 
     if (!insertedAscendHooks) {
@@ -1262,7 +1289,7 @@ function start(autoClick, autoBuy) {
             gameReincarnate(bypass);
             if (bypass) {
                 console.log('\nReincarnating, bot started');
-                start(autoClicker, autoBuyer);
+                start(autoBuyer, autoClicker, extraClicker);
             }
         }
         insertedAscendHooks = 1
@@ -1274,15 +1301,18 @@ function start(autoClick, autoBuy) {
     clickCountFlag = 1;
 
     pause();
-    if (autoClick) startClicking();
-    else stopClicking();
     if (autoBuy) startBuying();
     else stopBuying();
+    if (autoClick) startClicking();
+    else stopClicking();
     botInterval = setInterval(playTheGame);
+    if (extraClick) startExtraClicking();
+    else stopExtraClicking();
 }
 
 function pause() {
     clearInterval(botInterval);
+    stopExtraClicking();
 }
 
 function startClicking() {
@@ -1316,4 +1346,4 @@ function stop() {
     pause();
 }
 
-start(0,0);
+start(0,0,0);
