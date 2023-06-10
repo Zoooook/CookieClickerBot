@@ -1043,6 +1043,19 @@ function doOrCalculateBestThing(){
         }
     }
 
+    // Override best purchase with user defined priority
+    if (userBuy) {
+        best = things[userBuy];
+        if (best) clog(best, 'user');
+        else {
+            best = {type: 'invalid', name: userBuy};
+            clog(best);
+            userBuy = '';
+            autoBuyer = autoBuyerAfterUserBuy;
+            return;
+        }
+    }
+
     // Set price for first building of multi building purchase
     if (best.basePrice) best.price = best.basePrice;
 
@@ -1091,9 +1104,18 @@ function formatTime(date) {
 
 function playTheGame() {
     if (autoBuyer && best.name && Game.cookies >= best.price && best.type != 'nothing') {
-        if (best.type == 'building'){
+        if (userBuy) {
+            if(best.name == userBuy.replace(' Tier', '') && ['building', 'upgrade'].includes(best.type)) {
+                if      (best.type == 'building') Game.Objects[best.name].buy(1);
+                else if (best.type == 'upgrade') Game.Upgrades[best.name].buy(1);
+                if (!best.buyCount || best.buyCount == 1) {
+                    userBuy = '';
+                    autoBuyer = autoBuyerAfterUserBuy;
+                }
+            }
+        } else if (best.type == 'building'){
             if (best.price < Game.cookies / 1000000) bulkBuy = 50;
-            else if (best.price < Game.cookies / 1000) bulkBuy = 10;
+            else if (best.price < Game.cookies / 10000) bulkBuy = 10;
             else bulkBuy = 1;
             Game.Objects[best.name].buy(bulkBuy);
             if (bulkBuy > 1) console.log(`Bought ${bulkBuy} ${best.name}`);
@@ -1180,6 +1202,8 @@ let botInterval;
 let clickIntervals = [];
 let best;
 let autoBuyer;
+let userBuy;
+let autoBuyerAfterUserBuy;
 let bulkBuy = 1;
 let restoreHeight;
 let now;
@@ -1247,16 +1271,17 @@ function extraClick() {
 }
 
 function stopExtraClicking() {
-    extraClicker = 0;
     Game.ClickCookie = gameClickCookie;
-    for (let i = 0; i < 8; ++i) clearInterval(clickIntervals[i])
+    for (let i = 0; i < extraClicker; ++i) clearInterval(clickIntervals[i])
+    extraClicker = 0;
 }
 
-function startExtraClicking() {
+function startExtraClicking(power) {
+    extraClicker = Math.max(extraClicker, power);
     stopExtraClicking();
-    extraClicker = 1;
+    extraClicker = power;
     removeRateLimiter();
-    for (let i = 0; i < 8; ++i) clickIntervals[i] = setInterval(extraClick);
+    for (let i = 0; i < extraClicker; ++i) clickIntervals[i] = setInterval(extraClick);
 }
 
 function resetClickCount() {
@@ -1274,7 +1299,7 @@ function resetClickCount() {
     clickCountShortSaved = 0;
 }
 
-function start(autoBuy, autoClick, extraClick) {
+function start(autoBuy, autoClick, extraClicks) {
     Game.Win('Third-party');
 
     if (!insertedAscendHooks) {
@@ -1306,13 +1331,19 @@ function start(autoBuy, autoClick, extraClick) {
     if (autoClick) startClicking();
     else stopClicking();
     botInterval = setInterval(playTheGame);
-    if (extraClick) startExtraClicking();
+    if (extraClicks) startExtraClicking(extraClicks);
     else stopExtraClicking();
 }
 
 function pause() {
     clearInterval(botInterval);
     stopExtraClicking();
+}
+
+function buy(userOverride) {
+    userBuy = userOverride;
+    autoBuyerAfterUserBuy = autoBuyer;
+    autoBuyer = 1;
 }
 
 function startClicking() {
@@ -1331,10 +1362,13 @@ function stopClicking() {
 
 function startBuying() {
     autoBuyer = 1;
+    if (userBuy) autoBuyerAfterUserBuy = 1;
 }
 
 function stopBuying() {
     autoBuyer = 0;
+    autoBuyerAfterUserBuy = 0;
+    userBuy = '';
 }
 
 function stop() {
