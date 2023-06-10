@@ -1,4 +1,3 @@
-// user input override buy
 // prioritize fortunes over corresponding building
 // redraw cookie after dunk
 // get more achievements
@@ -1044,14 +1043,14 @@ function doOrCalculateBestThing(){
     }
 
     // Override best purchase with user defined priority
-    if (userBuy) {
-        best = things[userBuy];
+    if (userBuy.length) {
+        best = things[userBuy[0]];
         if (best) clog(best, 'user');
         else {
-            best = {type: 'invalid', name: userBuy};
+            best = {type: 'invalid', name: userBuy[0]};
             clog(best);
-            userBuy = '';
-            autoBuyer = autoBuyerAfterUserBuy;
+            userBuy.shift();
+            if (!userBuy.length) autoBuyer = autoBuyerAfterUserBuy;
             return;
         }
     }
@@ -1104,13 +1103,13 @@ function formatTime(date) {
 
 function playTheGame() {
     if (autoBuyer && best.name && Game.cookies >= best.price && best.type != 'nothing') {
-        if (userBuy) {
-            if(best.name == userBuy.replace(' Tier', '') && ['building', 'upgrade'].includes(best.type)) {
+        if (userBuy.length) {
+            if(best.name == userBuy[0].replace(' Tier', '') && ['building', 'upgrade'].includes(best.type)) {
                 if      (best.type == 'building') Game.Objects[best.name].buy(1);
                 else if (best.type == 'upgrade') Game.Upgrades[best.name].buy(1);
                 if (!best.buyCount || best.buyCount == 1) {
-                    userBuy = '';
-                    autoBuyer = autoBuyerAfterUserBuy;
+                    userBuy.shift();
+                    if (!userBuy.length) autoBuyer = autoBuyerAfterUserBuy;
                 }
             }
         } else if (best.type == 'building'){
@@ -1202,7 +1201,7 @@ let botInterval;
 let clickIntervals = [];
 let best;
 let autoBuyer;
-let userBuy;
+let userBuy = [];
 let autoBuyerAfterUserBuy;
 let bulkBuy = 1;
 let restoreHeight;
@@ -1341,8 +1340,8 @@ function pause() {
 }
 
 function buy(userOverride) {
-    userBuy = userOverride;
-    autoBuyerAfterUserBuy = autoBuyer;
+    if (!userBuy.length) autoBuyerAfterUserBuy = autoBuyer;
+    userBuy.push(userOverride);
     autoBuyer = 1;
 }
 
@@ -1362,13 +1361,13 @@ function stopClicking() {
 
 function startBuying() {
     autoBuyer = 1;
-    if (userBuy) autoBuyerAfterUserBuy = 1;
+    if (userBuy.length) autoBuyerAfterUserBuy = 1;
 }
 
 function stopBuying() {
     autoBuyer = 0;
     autoBuyerAfterUserBuy = 0;
-    userBuy = '';
+    userBuy = [];
 }
 
 function stop() {
