@@ -1043,14 +1043,14 @@ function doOrCalculateBestThing(){
     }
 
     // Override best purchase with user defined priority
-    if (userBuy.length) {
-        best = things[userBuy[0]];
+    if (buyList.length) {
+        best = things[buyList[0]];
         if (best) clog(best, 'user');
         else {
-            best = {type: 'invalid', name: userBuy[0]};
+            best = {type: 'invalid', name: buyList[0]};
             clog(best);
-            userBuy.shift();
-            if (!userBuy.length) autoBuyer = autoBuyerAfterUserBuy;
+            buyList.shift();
+            if (!buyList.length) autoBuyer = autoBuyerAfterBuyList;
             return;
         }
     }
@@ -1103,13 +1103,13 @@ function formatTime(date) {
 
 function playTheGame() {
     if (autoBuyer && best.name && Game.cookies >= best.price && best.type != 'nothing') {
-        if (userBuy.length) {
-            if(best.name == userBuy[0].replace(' Tier', '') && ['building', 'upgrade'].includes(best.type)) {
+        if (buyList.length) {
+            if(best.name == buyList[0].replace(' Tier', '') && ['building', 'upgrade'].includes(best.type)) {
                 if      (best.type == 'building') Game.Objects[best.name].buy(1);
                 else if (best.type == 'upgrade') Game.Upgrades[best.name].buy(1);
                 if (!best.buyCount || best.buyCount == 1) {
-                    userBuy.shift();
-                    if (!userBuy.length) autoBuyer = autoBuyerAfterUserBuy;
+                    buyList.shift();
+                    if (!buyList.length) autoBuyer = autoBuyerAfterBuyList;
                 }
             }
         } else if (best.type == 'building'){
@@ -1201,8 +1201,8 @@ let botInterval;
 let clickIntervals = [];
 let best;
 let autoBuyer;
-let userBuy = [];
-let autoBuyerAfterUserBuy;
+let buyList = [];
+let autoBuyerAfterBuyList;
 let bulkBuy = 1;
 let restoreHeight;
 let now;
@@ -1340,8 +1340,8 @@ function pause() {
 }
 
 function buy(userOverride) {
-    if (!userBuy.length) autoBuyerAfterUserBuy = autoBuyer;
-    userBuy.push(userOverride);
+    if (!buyList.length) autoBuyerAfterBuyList = autoBuyer;
+    buyList.push(userOverride);
     autoBuyer = 1;
 }
 
@@ -1361,13 +1361,13 @@ function stopClicking() {
 
 function startBuying() {
     autoBuyer = 1;
-    if (userBuy.length) autoBuyerAfterUserBuy = 1;
+    if (buyList.length) autoBuyerAfterBuyList = 1;
 }
 
 function stopBuying() {
     autoBuyer = 0;
-    autoBuyerAfterUserBuy = 0;
-    userBuy = [];
+    autoBuyerAfterBuyList = 0;
+    buyList = [];
 }
 
 function stop() {
