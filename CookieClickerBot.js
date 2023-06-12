@@ -1154,7 +1154,7 @@ function playTheGame() {
     }
 
     now = new Date();
-    if (autoClicker && !extraClicker) {
+    if (!removedRateLimiter) {
         while (now - Game.lastClick < 20) now = new Date();
     }
 
@@ -1208,6 +1208,7 @@ let restoreHeight;
 let now;
 let autoClicker;
 let extraClicker;
+let removedRateLimiter;
 let recalculate;
 let clickCountFlag;
 let clickCountStart;
@@ -1259,6 +1260,7 @@ function removeRateLimiter() {
             .replace(' || now-Game.lastClick<1000/((e?e.detail:1)===0?3:50)', '')
             .replace(/\n?\}$/,''),
     );
+    removedRateLimiter = 1;
 }
 
 function extraClick() {
@@ -1271,8 +1273,8 @@ function extraClick() {
 
 function stopExtraClicking() {
     Game.ClickCookie = gameClickCookie;
+    removedRateLimiter = 0;
     for (let i = 0; i < extraClicker; ++i) clearInterval(clickIntervals[i])
-    extraClicker = 0;
 }
 
 function startExtraClicking(power) {
