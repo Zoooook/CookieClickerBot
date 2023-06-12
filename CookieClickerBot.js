@@ -731,13 +731,13 @@ function doOrCalculateBestThing(){
         }
 
         // Set aura (sacrifice a building) before any more buildings are built
-        if (autoBuyer && Game.Has('A crumbly egg') && bulkBuy == 1) {
+        if (autoBuyer && Game.Has('A crumbly egg')) {
             if (Game.dragonLevel >= 14 && !Game.hasAura('Dragonflight')) {
                 best = {type: 'aura', name: 'Dragonflight', price: 0};
                 console.log('\n');
                 clog(best);
                 return;
-            } else if (Game.dragonLevel >= 5 && Game.dragonLevel < 14 || Game.dragonLevel == Game.dragonLevels.length - 1) {
+            } else if (Game.dragonLevel >= 5 && Game.dragonLevel < 14 || Game.dragonLevel == Game.dragonLevels.length - 1 && bulkBuy == 1) {
                 const bestAura = findBestAura(getHighestBuilding().name || '', -1);
                 if (bestAura.name && !Game.hasAura(bestAura.name)) {
                     best = {type: 'aura', name: bestAura.name, cps: bestAura.cps, price: 0, percent: (bestAura.cps / currentCps - 1) * 100};
