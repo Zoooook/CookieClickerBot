@@ -11,6 +11,8 @@
 // save scum sugar lump harvesting
 // minigames, level objects
 
+// Object.keys(Game.Upgrades).filter(x => Game.Upgrades[x].bought && !['prestige', 'toggle'].includes(Game.Upgrades[x].pool)).sort((a,b) => Game.Upgrades[b].getPrice() - Game.Upgrades[a].getPrice()).slice(0,10).map(x => {return {price: Game.Upgrades[x].getPrice().toPrecision(4), name: x};});
+
 document.getElementById("game").style.top=0
 
 function upgradeSpecial(name) {
@@ -1142,8 +1144,10 @@ function playTheGame() {
 
         best = {};
     } else if (autoClicker && Game.shimmers.length && (!Game.HasAchiev('Early bird') || Game.HasAchiev('Fading luck') || Game.shimmers[0].type != 'golden' || Game.shimmers[0].life<Game.fps)) {
-        console.log(`Popped a ${Game.shimmers[0].type.replace('golden', 'cookie')}`);
-        Game.shimmers[0].pop();
+        while (Game.shimmers.length) {
+            console.log(`Popped a ${Game.shimmers[0].type.replace('golden', 'cookie')}`);
+            Game.shimmers[0].pop();
+        }
     } else if (!best.name) {
         if (restoreHeight && Game.HasAchiev('Cookie-dunker')) {
             Game.LeftBackground.canvas.height = restoreHeight;
